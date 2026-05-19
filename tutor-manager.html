@@ -1,0 +1,3892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高中数学家教管理系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+:root {
+  --primary: #4f46e5;
+  --primary-light: #6366f1;
+  --primary-bg: rgba(79,70,229,0.1);
+  --success: #10b981;
+  --success-bg: rgba(16,185,129,0.1);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245,158,11,0.1);
+  --danger: #ef4444;
+  --danger-bg: rgba(239,68,68,0.1);
+  --info: #06b6d4;
+  --bg: #f8fafc;
+  --bg-sidebar: #1e293b;
+  --bg-card: #ffffff;
+  --bg-input: #f1f5f9;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --text-sidebar: #94a3b8;
+  --text-sidebar-active: #ffffff;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 10px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+a { text-decoration: none; color: inherit; }
+
+/* Layout */
+.app { display: flex; height: 100vh; }
+.sidebar {
+  width: 220px;
+  background: var(--bg-sidebar);
+  color: var(--text-sidebar);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-header h1 {
+  font-size: 1.1em;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-header .sub { font-size: 0.75em; color: var(--text-sidebar); margin-top: 4px; }
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9em;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.nav-item.active {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border-left-color: var(--primary-light);
+}
+.nav-item .nav-icon { font-size: 1.1em; width: 24px; text-align: center; }
+.nav-section-title {
+  padding: 16px 20px 6px;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(148,163,184,0.6);
+}
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.75em;
+}
+.sidebar-footer a { color: var(--primary-light); cursor: pointer; }
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-size: 1.2em; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.search-box {
+  position: relative;
+}
+.search-box input {
+  padding: 8px 12px 8px 32px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85em;
+  width: 220px;
+  outline: none;
+  color: var(--text);
+}
+.search-box input:focus { border-color: var(--primary-light); }
+.search-box::before {
+  content: '🔍';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8em;
+}
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Cards & Components */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-header h3 { font-size: 1em; font-weight: 600; }
+.card-body { padding: 20px; }
+
+/* Stat Cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.stat-card .stat-icon {
+  font-size: 1.5em;
+  margin-bottom: 8px;
+}
+.stat-card .stat-value {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--text);
+}
+.stat-card .stat-label {
+  font-size: 0.85em;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.85em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-light); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { opacity: 0.9; }
+.btn-warning { background: var(--warning); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-light);
+}
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-sm { padding: 5px 10px; font-size: 0.8em; }
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-icon:hover { border-color: var(--primary); }
+
+/* Forms */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 0.85em;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text-light);
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9em;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--primary-light);
+}
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.85em;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  font-weight: 600;
+  color: var(--text-light);
+  background: var(--bg-input);
+  white-space: nowrap;
+}
+tr:hover { background: rgba(99,102,241,0.03); }
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 500;
+}
+.tag-grade { background: var(--primary-bg); color: var(--primary); }
+.tag-success { background: var(--success-bg); color: var(--success); }
+.tag-warning { background: var(--warning-bg); color: var(--warning); }
+.tag-danger { background: var(--danger-bg); color: var(--danger); }
+
+/* Mastery Bar */
+.mastery-bar {
+  display: flex;
+  gap: 3px;
+}
+.mastery-dot {
+  width: 20px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.mastery-dot.filled { background: var(--primary); }
+.mastery-label { font-size: 0.75em; color: var(--text-light); margin-left: 6px; }
+
+/* Student List */
+.student-list { display: flex; flex-direction: column; gap: 8px; }
+.student-card-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.student-card-item:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-lg);
+}
+.student-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+.student-info { flex: 1; min-width: 0; }
+.student-name { font-weight: 600; font-size: 0.95em; }
+.student-meta {
+  font-size: 0.8em;
+  color: var(--text-light);
+  margin-top: 2px;
+  display: flex;
+  gap: 12px;
+}
+.student-actions { display: flex; gap: 6px; }
+
+/* Tab Bar */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab-item {
+  padding: 10px 18px;
+  font-size: 0.85em;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--text-light);
+  transition: all 0.2s;
+}
+.tab-item:hover { color: var(--text); }
+.tab-item.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* Charts */
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg-card);
+  border-radius: 14px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: modalIn 0.25s ease;
+}
+@keyframes modalIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header h3 { font-size: 1.1em; font-weight: 600; }
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.3em;
+  cursor: pointer;
+  color: var(--text-light);
+  padding: 4px;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 24px; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Quick Tags */
+.quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.quick-tag {
+  padding: 4px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 0.78em;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-light);
+}
+.quick-tag:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
+.template-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.template-btn {
+  padding: 6px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-light);
+}
+.template-btn:hover { border-color: var(--primary); color: var(--primary); }
+.student-switcher {
+  padding: 6px 12px;
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-light);
+  border-radius: 8px;
+  font-size: 0.85em;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 500;
+}
+.student-switcher select {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-size: 0.95em;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+.student-switcher-select {
+  padding: 6px 12px;
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-light);
+  border-radius: 8px;
+  font-size: 0.85em;
+  color: var(--primary);
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Module Grid */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+.module-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border-radius: 8px;
+  font-size: 0.85em;
+}
+.module-item .mod-name { flex: 1; }
+.module-item select {
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.85em;
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+/* Issue List */
+.issue-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.issue-status {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  margin-top: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7em;
+  transition: all 0.2s;
+}
+.issue-status.resolved {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+.issue-text { flex: 1; font-size: 0.9em; }
+.issue-text.resolved { text-decoration: line-through; color: var(--text-light); }
+.issue-date { font-size: 0.75em; color: var(--text-light); }
+
+/* Report Preview */
+.report-preview {
+  background: var(--bg-input);
+  border-radius: 8px;
+  padding: 20px;
+  font-size: 0.9em;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  max-height: 500px;
+  overflow-y: auto;
+  font-family: inherit;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--text-light);
+}
+.empty-state .empty-icon { font-size: 3em; margin-bottom: 12px; }
+.empty-state p { margin-bottom: 16px; }
+
+/* Suggestion Cards */
+.suggestion-card {
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+}
+.suggestion-icon { font-size: 1.5em; flex-shrink: 0; }
+.suggestion-title { font-weight: 600; font-size: 0.9em; margin-bottom: 4px; }
+.suggestion-desc { font-size: 0.85em; color: var(--text-light); line-height: 1.6; }
+.suggestion-priority {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 0.7em;
+  font-weight: 600;
+  margin-left: 8px;
+}
+.priority-high { background: var(--danger-bg); color: var(--danger); }
+.priority-medium { background: var(--warning-bg); color: var(--warning); }
+
+/* Tooltip */
+.tooltip-wrap { position: relative; }
+.tooltip-wrap:hover .tooltip { display: block; }
+.tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-sidebar);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 4px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+
+/* Workbench */
+.workbench-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+.wb-today-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.wb-today-header h2 {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+.wb-date {
+  font-size: 0.85em;
+  color: var(--text-light);
+}
+.wb-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.wb-quick-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  text-align: center;
+}
+.wb-quick-stat .wb-qs-val {
+  font-size: 1.5em;
+  font-weight: 700;
+}
+.wb-quick-stat .wb-qs-label {
+  font-size: 0.78em;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+.schedule-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+.schedule-card:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-lg);
+}
+.schedule-time {
+  background: var(--primary);
+  color: #fff;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  font-weight: 600;
+}
+.schedule-time .sc-time { font-size: 1em; }
+.schedule-time .sc-dur { font-size: 0.7em; opacity: 0.85; margin-top: 2px; }
+.schedule-body {
+  flex: 1;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.schedule-name {
+  font-weight: 600;
+  font-size: 0.95em;
+}
+.schedule-preview {
+  font-size: 0.8em;
+  color: var(--text-light);
+}
+.schedule-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+}
+.schedule-done {
+  background: var(--success-bg);
+  border-color: var(--success);
+}
+.schedule-done .schedule-time {
+  background: var(--success);
+}
+.wb-side-section {
+  margin-bottom: 16px;
+}
+.wb-side-title {
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.wb-todo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.85em;
+  margin-bottom: 6px;
+  background: var(--bg-input);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.wb-todo-item:hover { background: var(--primary-bg); }
+.wb-todo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.wb-action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.wb-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.2s;
+  color: var(--text);
+}
+.wb-action-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+.wb-action-btn .wb-ab-icon { font-size: 1.2em; }
+.no-schedule {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-light);
+}
+.no-schedule p { margin-top: 8px; font-size: 0.9em; }
+
+/* Schedule Setup */
+.schedule-setup-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.schedule-setup-row:last-child { border-bottom: none; }
+.schedule-day-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.schedule-day-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* Session Type Tags */
+.tag-knowledge { background: var(--primary-bg); color: var(--primary); }
+.tag-exercise { background: var(--success-bg); color: var(--success); }
+.tag-psychology { background: #fdf4ff; color: #a855f7; }
+.tag-exam-review { background: var(--warning-bg); color: var(--warning); }
+.tag-review { background: var(--info); color: #fff; }
+
+/* Board Upload */
+.board-upload-area {
+  background: var(--bg-input);
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 80px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.board-upload-area:hover, .board-upload-area.drag-over {
+  border-color: var(--primary-light);
+  background: var(--primary-bg);
+}
+.board-upload-hint {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.85em;
+  padding: 8px 0;
+}
+.board-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.board-thumb {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: default;
+}
+.board-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.board-thumb-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.board-thumb-remove:hover {
+  background: var(--danger);
+}
+.board-preview-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.board-preview-overlay.show { display: flex; }
+.board-preview-overlay img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+}
+
+/* Meeting Summary Import */
+.meeting-import-area {
+  background: #fefce8;
+  border: 1px dashed #ca8a04;
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 80px;
+  font-size: 0.85em;
+  font-family: inherit;
+  color: var(--text);
+  width: 100%;
+  resize: vertical;
+  outline: none;
+}
+.meeting-import-area:focus { border-color: #ca8a04; border-style: solid; }
+
+/* Financial */
+.fin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.fin-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.fin-stat-card .fin-val {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: var(--success);
+}
+.fin-stat-card .fin-label {
+  font-size: 0.8em;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+.payment-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+.payment-toggle input[type="checkbox"] {
+  accent-color: var(--success);
+}
+
+/* Calendar */
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.cal-header h2 {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cal-nav .btn {
+  min-width: 36px;
+  justify-content: center;
+}
+.cal-week-label {
+  font-size: 0.9em;
+  font-weight: 500;
+  min-width: 180px;
+  text-align: center;
+}
+.cal-grid-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: 50px repeat(7, 1fr);
+}
+.cal-day-header {
+  padding: 4px 2px;
+  text-align: center;
+  font-size: 0.78em;
+  font-weight: 600;
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  color: var(--text-light);
+}
+.cal-day-header.cal-today {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+.cal-day-header .cal-day-date {
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+}
+.cal-day-header.cal-today .cal-day-date {
+  color: var(--primary);
+}
+.cal-corner {
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border);
+  padding: 4px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65em;
+  color: var(--text-light);
+}
+.cal-time-label {
+  padding: 0 4px;
+  font-size: 0.65em;
+  color: var(--text-light);
+  text-align: right;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 1px;
+  height: 38px;
+}
+.cal-cell {
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  height: 38px;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  overflow: visible;
+}
+.cal-cell:hover {
+  background: var(--primary-bg);
+}
+.cal-cell.cal-today-col {
+  background: rgba(79,70,229,0.02);
+}
+.cal-cell.cal-today-col:hover {
+  background: var(--primary-bg);
+}
+.cal-event {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  right: 2px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  font-size: 0.75em;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  transition: opacity 0.15s, box-shadow 0.15s;
+  line-height: 1.3;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.cal-event:hover {
+  opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  z-index: 3;
+}
+.cal-event-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-event-time {
+  font-size: 0.85em;
+  opacity: 0.9;
+}
+.cal-now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--danger);
+  z-index: 5;
+  pointer-events: none;
+}
+.cal-now-line::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+.cal-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.cal-summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.cal-summary-card .cs-label {
+  font-size: 0.8em;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+.cal-summary-card .cs-value {
+  font-size: 1.3em;
+  font-weight: 700;
+}
+.cal-summary-card .cs-detail {
+  font-size: 0.8em;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border-radius: 8px;
+}
+.cal-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8em;
+}
+.cal-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar-header h1 span, .sidebar-header .sub, .nav-item span:not(.nav-icon), .nav-section-title { display: none; }
+  .sidebar-header { padding: 16px 10px; }
+  .nav-item { padding: 12px; justify-content: center; }
+  .sidebar-footer { display: none; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>📐 <span>数学家教系统</span></h1>
+      <div class="sub">高中数学教学管理</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">主要</div>
+      <div class="nav-item active" data-page="workbench" onclick="switchPage('workbench')">
+        <span class="nav-icon">📋</span><span>今日工作台</span>
+      </div>
+      <div class="nav-item" data-page="calendar" onclick="switchPage('calendar')">
+        <span class="nav-icon">📅</span><span>排课日历</span>
+      </div>
+      <div class="nav-item" data-page="dashboard" onclick="switchPage('dashboard')">
+        <span class="nav-icon">📊</span><span>数据分析</span>
+      </div>
+      <div class="nav-item" data-page="students" onclick="switchPage('students')">
+        <span class="nav-icon">👥</span><span>学生管理</span>
+      </div>
+      <div class="nav-section-title">学生详情</div>
+      <div class="nav-item" data-page="sessions" onclick="switchPage('sessions')">
+        <span class="nav-icon">📝</span><span>课程记录</span>
+      </div>
+      <div class="nav-item" data-page="grades" onclick="switchPage('grades')">
+        <span class="nav-icon">📈</span><span>成绩分析</span>
+      </div>
+      <div class="nav-item" data-page="report" onclick="switchPage('report')">
+        <span class="nav-icon">📋</span><span>家长报告</span>
+      </div>
+      <div class="nav-item" data-page="suggest" onclick="switchPage('suggest')">
+        <span class="nav-icon">🎯</span><span>排课建议</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="fileStatus" style="margin-bottom:6px;font-size:0.7em;word-break:break-all"></div>
+      <a onclick="reloadData()">🔄 刷新</a> · <a onclick="switchDataFile()">📂 切换文件</a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="pageTitle">总览仪表盘</div>
+        <div id="studentSwitcher" style="display:none"></div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-box">
+          <input type="text" id="globalSearch" placeholder="搜索学生..." oninput="globalSearchFn(this.value)">
+        </div>
+        <button class="btn btn-primary" onclick="openAddStudent()">+ 添加学生</button>
+      </div>
+    </div>
+    <div class="page-content" id="pageContent"></div>
+  </div>
+</div>
+
+<!-- Add/Edit Student Modal -->
+<div class="modal-overlay" id="studentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="studentModalTitle">添加学生</h3>
+      <button class="modal-close" onclick="closeModal('studentModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editStudentId">
+      <div class="form-row">
+        <div class="form-group"><label>姓名 *</label><input class="form-input" id="sName" placeholder="学生姓名"></div>
+        <div class="form-group"><label>性别</label>
+          <select class="form-select" id="sGender"><option value="male">男</option><option value="female">女</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>年级 *</label>
+        <select class="form-select" id="sGrade"><option>高一</option><option>高二</option><option>高三</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>课时费（元/小时）</label><input type="number" class="form-input" id="sHourlyRate" placeholder="如：200" min="0"></div>
+        <div class="form-group"><label>备注</label><input class="form-input" id="sNotes" placeholder="联系方式、学习特点等"></div>
+      </div>
+      <div class="form-group"><label>每周固定上课时间</label>
+        <div id="scheduleSetup"></div>
+        <button class="btn btn-sm btn-outline" style="margin-top:8px" onclick="addScheduleRow()">+ 添加时间段</button>
+      </div>
+      <div class="form-group"><label>自定义模块（逗号分隔）</label><input class="form-input" id="sCustomModules" placeholder="如：竞赛数学,线性代数基础"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('studentModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveStudent()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Session Modal -->
+<div class="modal-overlay" id="sessionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="sessionModalTitle">添加课程</h3>
+      <button class="modal-close" onclick="closeModal('sessionModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editSessionId">
+      <div class="form-group">
+        <label>快速填充模板</label>
+        <div class="template-btns">
+          <div class="template-btn" onclick="applyTemplate('new')">📖 新课讲解</div>
+          <div class="template-btn" onclick="applyTemplate('exercise')">✏️ 习题训练</div>
+          <div class="template-btn" onclick="applyTemplate('review')">🔄 复习巩固</div>
+          <div class="template-btn" onclick="applyTemplate('exam')">📝 考试讲评</div>
+          <div class="template-btn" onclick="applyTemplate('mistake')">❌ 错题分析</div>
+          <div class="template-btn" onclick="applyTemplate('weak')">🎯 专项突破</div>
+          <div class="template-btn" onclick="copyLastSession()">📋 复用上次课程</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>上课日期 *</label><input type="date" class="form-input" id="sessDate"></div>
+        <div class="form-group"><label>时长（小时）*</label><input type="number" class="form-input" id="sessDuration" value="1" min="0.5" step="0.5"></div>
+      </div>
+      <div class="form-group"><label>课程类型</label>
+        <select class="form-select" id="sessType">
+          <option value="knowledge">📖 知识讲解</option>
+          <option value="exercise">✏️ 习题训练</option>
+          <option value="review">🔄 复习巩固</option>
+          <option value="exam">📝 考试讲评</option>
+          <option value="psychology">💬 心理疏导</option>
+        </select>
+      </div>
+      <div class="form-group"><label>教学内容 *</label><textarea class="form-textarea" id="sessContent" placeholder="本节课教学内容..."></textarea></div>
+      <div class="form-group"><label>布置作业</label><textarea class="form-textarea" id="sessHomework" placeholder="布置的作业内容..." rows="2"></textarea></div>
+      <div class="form-group"><label>课堂备注</label><textarea class="form-textarea" id="sessNotes" placeholder="学生表现、需要跟进的点..." rows="2"></textarea></div>
+      <div class="form-group">
+        <label>📋 板书截图 <span style="font-weight:400;color:var(--text-light)">（点击上传或拖拽图片到此处）</span></label>
+        <div class="board-upload-area" id="boardUploadArea" onclick="document.getElementById('boardFileInput').click()">
+          <input type="file" id="boardFileInput" accept="image/*" multiple style="display:none" onchange="handleBoardFiles(this.files)">
+          <div class="board-upload-hint" id="boardUploadHint">📷 点击上传板书截图 / 拖拽图片到此处 / Ctrl+V 粘贴</div>
+          <div class="board-thumbs" id="boardThumbs"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>📎 腾讯会议总结 <span style="font-weight:400;color:var(--text-light)">（粘贴会议自动生成的文字总结）</span></label>
+        <textarea class="meeting-import-area" id="sessMeetingSummary" placeholder="粘贴腾讯会议的文字总结..." rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="payment-toggle">
+          <input type="checkbox" id="sessPaid" checked> 已计费
+        </label>
+      </div>
+      <div class="form-group">
+        <label>快捷标签（点击插入备注）</label>
+        <div class="quick-tags" id="quickTags">
+          <span class="quick-tag" onclick="insertNote('理解能力强，吸收快')">理解能力强</span>
+          <span class="quick-tag" onclick="insertNote('基础薄弱，需要加强')">基础薄弱</span>
+          <span class="quick-tag" onclick="insertNote('注意力不集中，需提醒')">注意力不集中</span>
+          <span class="quick-tag" onclick="insertNote('作业完成质量好')">作业完成好</span>
+          <span class="quick-tag" onclick="insertNote('作业未完成')">作业未完成</span>
+          <span class="quick-tag" onclick="insertNote('解题思路清晰')">思路清晰</span>
+          <span class="quick-tag" onclick="insertNote('计算粗心，需多练习')">计算粗心</span>
+          <span class="quick-tag" onclick="insertNote('公式记忆不牢')">公式不熟</span>
+          <span class="quick-tag" onclick="insertNote('进步明显，继续保持')">进步明显</span>
+          <span class="quick-tag" onclick="insertNote('需加强课后复习')">需加强复习</span>
+          <span class="quick-tag" onclick="insertNote('课堂互动积极')">互动积极</span>
+          <span class="quick-tag" onclick="insertNote('需要家长配合督促')">需家长配合</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('sessionModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveSession()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Exam Modal -->
+<div class="modal-overlay" id="examModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="examModalTitle">添加考试</h3>
+      <button class="modal-close" onclick="closeModal('examModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editExamId">
+      <div class="form-row">
+        <div class="form-group"><label>考试名称 *</label><input class="form-input" id="eName" placeholder="如：期中考试"></div>
+        <div class="form-group"><label>考试类型</label>
+          <select class="form-select" id="eType"><option>月考</option><option>期中</option><option>期末</option><option>模考</option><option>自测</option></select>
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label>日期 *</label><input type="date" class="form-input" id="eDate"></div>
+        <div class="form-group"><label>得分 *</label><input type="number" class="form-input" id="eScore" placeholder="分数"></div>
+        <div class="form-group"><label>满分</label><input type="number" class="form-input" id="eFullScore" value="150"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>班级/年级排名</label><input class="form-input" id="eRank" placeholder="可选"></div>
+        <div class="form-group"><label>备注</label><input class="form-input" id="eNotes" placeholder="可选"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('examModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveExam()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Issue Modal -->
+<div class="modal-overlay" id="issueModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>记录学习问题</h3>
+      <button class="modal-close" onclick="closeModal('issueModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>问题描述 *</label><textarea class="form-textarea" id="issueText" placeholder="描述学生的学习问题..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('issueModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveIssue()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal-overlay" id="feedbackModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <h3>📝 课后反馈</h3>
+      <button class="modal-close" onclick="closeModal('feedbackModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row" style="margin-bottom:16px">
+        <div class="form-group"><label>选择课程</label>
+          <select class="form-select" id="feedbackSessionSelect" onchange="generateFeedback()"></select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="copyFeedback()">📋 复制反馈</button>
+        </div>
+      </div>
+      <div class="report-preview" id="feedbackContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Board Image Preview -->
+<div class="board-preview-overlay" id="boardPreviewOverlay" onclick="this.classList.remove('show')">
+  <img id="boardPreviewImg" src="">
+</div>
+
+<!-- Schedule Modal -->
+<div class="modal-overlay" id="scheduleModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h3 id="scheduleModalTitle">添加排课</h3>
+      <button class="modal-close" onclick="closeModal('scheduleModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editScheduleStudentId">
+      <input type="hidden" id="editScheduleIdx">
+      <div class="form-group">
+        <label>学生 *</label>
+        <select class="form-select" id="schedStudent"></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>星期</label>
+          <select class="form-select" id="schedDay">
+            <option value="1">周一</option>
+            <option value="2">周二</option>
+            <option value="3">周三</option>
+            <option value="4">周四</option>
+            <option value="5">周五</option>
+            <option value="6">周六</option>
+            <option value="0">周日</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>时间</label>
+          <input type="time" class="form-input" id="schedTime" value="19:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>时长</label>
+        <select class="form-select" id="schedDuration">
+          <option value="1">1 小时</option>
+          <option value="1.5">1.5 小时</option>
+          <option value="2">2 小时</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" style="color:var(--danger);margin-right:auto;display:none" id="schedDeleteBtn" onclick="deleteSchedule()">删除排课</button>
+      <button class="btn btn-outline" onclick="closeModal('scheduleModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveSchedule()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <h3>家长学习报告</h3>
+      <button class="modal-close" onclick="closeModal('reportModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row" style="margin-bottom:16px">
+        <div class="form-group"><label>报告周期</label>
+          <select class="form-select" id="reportPeriod" onchange="generateReport()">
+            <option value="month">最近一个月</option>
+            <option value="quarter">最近三个月</option>
+            <option value="semester">本学期</option>
+            <option value="all">全部</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="copyReport()">复制报告</button>
+        </div>
+      </div>
+      <div class="report-preview" id="reportContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const STORAGE_KEY = 'tutor-manager-data';
+const DEFAULT_MODULES = ['集合与逻辑','不等式','函数','三角函数','数列','平面向量','立体几何','解析几何','概率与统计','导数','复数','排列组合','二项式定理'];
+const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#f97316','#eab308','#22c55e','#14b8a6','#06b6d4','#3b82f6'];
+
+// 文件同步相关
+let dataFileHandle = null;
+let dataFileName = '';
+let fileSupported = 'showOpenFilePicker' in window;
+
+// IndexedDB 存储文件句柄
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('tutor-file-db', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('handles');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbGet(key) {
+  try {
+    const db = await idbOpen();
+    return new Promise((resolve) => {
+      const tx = db.transaction('handles', 'readonly');
+      const req = tx.objectStore('handles').get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  } catch { return null; }
+}
+
+async function idbSet(key, val) {
+  try {
+    const db = await idbOpen();
+    return new Promise((resolve) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').put(val, key);
+      tx.oncomplete = () => resolve();
+    });
+  } catch {}
+}
+
+async function readFile(handle) {
+  try {
+    const file = await handle.getFile();
+    // 每次读取最新的文件内容
+    const text = await file.text();
+    if (!text || text.trim() === '') return null;
+    return JSON.parse(text);
+  } catch { return null; }
+}
+
+async function writeFile(handle, data) {
+  try {
+    const writable = await handle.createWritable();
+    await writable.write(JSON.stringify(data, null, 2));
+    await writable.close();
+    return true;
+  } catch { return false; }
+}
+
+async function selectDataFile() {
+  try {
+    const [handle] = await window.showOpenFilePicker({
+      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+      multiple: false
+    });
+    dataFileHandle = handle;
+    dataFileName = handle.name;
+    await idbSet('dataFileHandle', handle);
+    return true;
+  } catch { return false; }
+}
+
+async function createDataFile() {
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'tutor-data.json',
+      types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+    });
+    dataFileHandle = handle;
+    dataFileName = handle.name;
+    await idbSet('dataFileHandle', handle);
+    const defaultData = { students: [], settings: { customModules: [] } };
+    await writeFile(handle, defaultData);
+    return defaultData;
+  } catch { return null; }
+}
+
+async function initStorage() {
+  if (!fileSupported) {
+    try { const r = localStorage.getItem(STORAGE_KEY); if (r) return JSON.parse(r); } catch(e) {}
+    return { students: [], settings: { customModules: [] } };
+  }
+
+  const savedHandle = await idbGet('dataFileHandle');
+  if (!savedHandle) return null;
+
+  // 尝试获取权限并读取
+  let handle = savedHandle;
+  let perm = await handle.queryPermission({ mode: 'readwrite' });
+
+  if (perm !== 'granted') {
+    perm = await handle.requestPermission({ mode: 'readwrite' });
+  }
+
+  if (perm === 'granted') {
+    dataFileHandle = handle;
+    dataFileName = handle.name;
+    const data = await readFile(handle);
+    if (data && data.students && Array.isArray(data.students)) return data;
+    // 文件读到了但数据无效，可能是空文件或被清空
+    return null;
+  }
+
+  return null;
+}
+
+async function saveData(d) {
+  if (dataFileHandle) {
+    await writeFile(dataFileHandle, d);
+  } else {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  }
+}
+
+let lastLoadTime = null;
+
+function updateFileStatus() {
+  const el = document.getElementById('fileStatus');
+  if (!el) return;
+  const timeStr = lastLoadTime ? `${lastLoadTime.getHours()}:${String(lastLoadTime.getMinutes()).padStart(2,'0')}` : '';
+  if (dataFileHandle) {
+    el.innerHTML = `📂 ${dataFileName}${timeStr ? ` · ${timeStr}` : ''} <a onclick="switchDataFile()" style="cursor:pointer">切换</a>`;
+  } else if (fileSupported) {
+    el.innerHTML = `⚠️ 未关联文件 <a onclick="selectAndLoadFile()" style="cursor:pointer">选择文件</a>`;
+  } else {
+    el.innerHTML = `💾 本地存储模式`;
+  }
+}
+
+async function reloadData() {
+  if (!dataFileHandle) {
+    await selectAndLoadFile();
+    return;
+  }
+  const data = await readFile(dataFileHandle);
+  if (data && data.students && Array.isArray(data.students)) {
+    appData = data;
+    lastLoadTime = new Date();
+    renderPage();
+    updateFileStatus();
+  } else {
+    alert('读取数据失败，请重新选择文件');
+    dataFileHandle = null;
+    dataFileName = '';
+    await idbSet('dataFileHandle', null);
+    updateFileStatus();
+    renderPage();
+  }
+}
+
+async function selectAndLoadFile() {
+  if (await selectDataFile()) {
+    const data = await readFile(dataFileHandle);
+    if (data && data.students) {
+      appData = data;
+      saveData(appData);
+      renderPage();
+      updateFileStatus();
+    }
+  }
+}
+
+async function switchDataFile() {
+  const choice = confirm('选择「确定」打开已有文件\n选择「取消」创建新文件');
+  if (choice) {
+    await selectAndLoadFile();
+  } else {
+    const data = await createDataFile();
+    if (data) {
+      appData = data;
+      renderPage();
+      updateFileStatus();
+    }
+  }
+}
+
+async function recoverOldData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) { alert('浏览器中没有找到旧数据'); return; }
+    const oldData = JSON.parse(raw);
+    if (!oldData.students || oldData.students.length === 0) {
+      alert('旧数据为空'); return;
+    }
+    if (!confirm(`找到旧数据：${oldData.students.length} 位学生，确定恢复？\n（将覆盖当前数据）`)) return;
+    appData = oldData;
+    await saveData(appData);
+    renderPage();
+    updateFileStatus();
+    alert('旧数据已恢复并保存到文件！');
+  } catch(e) {
+    alert('恢复失败：' + e.message);
+  }
+}
+
+let appData = null;
+let currentPage = 'workbench';
+let selectedStudentId = null;
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmtDate(d) { return d || '-'; }
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function getStudent(id) { return appData.students.find(s => s.id === id); }
+function getAllModules() { return [...DEFAULT_MODULES, ...appData.settings.customModules]; }
+
+// ============ NAVIGATION ============
+function switchPage(page) {
+  // 自动选择逻辑：只有一个学生时自动选中，否则在页面内显示选择界面
+  if (['sessions','grades','report','suggest'].includes(page) && !selectedStudentId) {
+    if (appData.students.length === 1) {
+      selectedStudentId = appData.students[0].id;
+    } else if (appData.students.length === 0) {
+      alert('请先添加学生'); return;
+    }
+  }
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+  const titles = { workbench:'今日工作台', calendar:'排课日历', dashboard:'数据分析', students:'学生管理', sessions:'课程记录', grades:'成绩分析', report:'家长报告', suggest:'排课建议' };
+  document.getElementById('pageTitle').textContent = titles[page] || '';
+  renderStudentSwitcher();
+  renderPage();
+}
+
+function renderStudentSwitcher() {
+  const el = document.getElementById('studentSwitcher');
+  const needStudent = ['sessions','grades','report','suggest'].includes(currentPage);
+  if (!needStudent || appData.students.length === 0) {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = '';
+  const s = getStudent(selectedStudentId);
+  el.innerHTML = `<select class="student-switcher-select" onchange="selectStudent(this.value);renderPage()">
+    ${appData.students.map(st => `<option value="${st.id}" ${st.id===selectedStudentId?'selected':''}>${escapeHtml(st.name)}（${st.grade}）</option>`).join('')}
+  </select>`;
+}
+
+function renderPage() {
+  const c = document.getElementById('pageContent');
+  const renderers = { workbench: renderWorkbench, calendar: renderCalendar, dashboard: renderDashboard, students: renderStudents, sessions: renderSessions, grades: renderGrades, report: renderReportPage, suggest: renderSuggest };
+  c.innerHTML = '';
+  if (renderers[currentPage]) renderers[currentPage](c);
+}
+
+// ============ MODAL HELPERS ============
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ============ STUDENT MANAGEMENT ============
+function openAddStudent() {
+  document.getElementById('studentModalTitle').textContent = '添加学生';
+  document.getElementById('editStudentId').value = '';
+  ['sName','sNotes','sCustomModules'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sGender').value = 'male';
+  document.getElementById('sGrade').value = '高一';
+  document.getElementById('sHourlyRate').value = '';
+  renderScheduleSetup([]);
+  openModal('studentModal');
+}
+
+function openEditStudent(id) {
+  const s = getStudent(id);
+  if (!s) return;
+  document.getElementById('studentModalTitle').textContent = '编辑学生';
+  document.getElementById('editStudentId').value = id;
+  document.getElementById('sName').value = s.name;
+  document.getElementById('sGender').value = s.gender || 'male';
+  document.getElementById('sGrade').value = s.grade || '高一';
+  document.getElementById('sNotes').value = s.notes || '';
+  document.getElementById('sHourlyRate').value = s.hourlyRate || '';
+  document.getElementById('sCustomModules').value = (s.customModules || []).join(',');
+  renderScheduleSetup(s.weeklySchedule || []);
+  openModal('studentModal');
+}
+
+function renderScheduleSetup(schedule) {
+  const container = document.getElementById('scheduleSetup');
+  if (!schedule || schedule.length === 0) {
+    container.innerHTML = '<div style="font-size:0.85em;color:var(--text-light)">暂未设置固定上课时间</div>';
+    return;
+  }
+  container.innerHTML = schedule.map((sch, i) => `
+    <div class="schedule-setup-row" data-idx="${i}">
+      <select class="form-select" style="width:auto" data-field="day">
+        ${DAY_NAMES.map((d, di) => `<option value="${di}" ${di===sch.day?'selected':''}>${d}</option>`).join('')}
+      </select>
+      <input type="time" class="form-input" style="width:100px" data-field="time" value="${sch.time||''}">
+      <select class="form-select" style="width:80px" data-field="duration">
+        <option value="1" ${sch.duration===1?'selected':''}>1小时</option>
+        <option value="1.5" ${sch.duration===1.5?'selected':''}>1.5小时</option>
+        <option value="2" ${sch.duration===2?'selected':''}>2小时</option>
+      </select>
+      <button class="btn btn-sm btn-outline" style="color:var(--danger)" onclick="removeScheduleRow(${i})">删除</button>
+    </div>
+  `).join('');
+}
+
+function addScheduleRow() {
+  const container = document.getElementById('scheduleSetup');
+  const current = getScheduleFromUI();
+  current.push({ day: 1, time: '19:00', duration: 1 });
+  renderScheduleSetup(current);
+}
+
+function removeScheduleRow(idx) {
+  const current = getScheduleFromUI();
+  current.splice(idx, 1);
+  renderScheduleSetup(current);
+}
+
+function getScheduleFromUI() {
+  const rows = document.querySelectorAll('#scheduleSetup .schedule-setup-row');
+  const schedule = [];
+  rows.forEach(row => {
+    schedule.push({
+      day: parseInt(row.querySelector('[data-field="day"]').value),
+      time: row.querySelector('[data-field="time"]').value,
+      duration: parseFloat(row.querySelector('[data-field="duration"]').value)
+    });
+  });
+  return schedule;
+}
+
+function saveStudent() {
+  const name = document.getElementById('sName').value.trim();
+  if (!name) { alert('请输入姓名'); return; }
+  const editId = document.getElementById('editStudentId').value;
+  const customMods = document.getElementById('sCustomModules').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const hourlyRate = parseFloat(document.getElementById('sHourlyRate').value) || 0;
+  const weeklySchedule = getScheduleFromUI();
+  const commonData = {
+    name, gender: document.getElementById('sGender').value,
+    grade: document.getElementById('sGrade').value,
+    notes: document.getElementById('sNotes').value.trim(),
+    customModules: customMods, hourlyRate, weeklySchedule
+  };
+  if (editId) {
+    Object.assign(getStudent(editId), commonData);
+  } else {
+    const modules = {};
+    getAllModules().forEach(m => modules[m] = 0);
+    appData.students.push({
+      id: genId(), ...commonData,
+      startDate: todayStr(),
+      modules, sessions: [], exams: [], issues: []
+    });
+  }
+  saveData(appData);
+  closeModal('studentModal');
+  renderPage();
+}
+
+function deleteStudent(id) {
+  if (!confirm('确定删除该学生及所有相关数据？')) return;
+  appData.students = appData.students.filter(s => s.id !== id);
+  if (selectedStudentId === id) selectedStudentId = null;
+  saveData(appData);
+  renderPage();
+}
+
+function selectStudent(id) {
+  selectedStudentId = id;
+  renderPage();
+}
+
+function renderStudents(container) {
+  const students = appData.students;
+  if (students.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>还没有学生，点击右上角添加第一位学生</p></div>`;
+    return;
+  }
+  let html = '<div class="student-list">';
+  students.forEach((s, i) => {
+    const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    const totalSessions = s.sessions.length;
+    const totalHours = s.sessions.reduce((a,b) => a + (b.duration||0), 0);
+    const avgScore = s.exams.length ? (s.exams.reduce((a,b) => a + b.score/b.fullScore*100, 0) / s.exams.length).toFixed(1) : '-';
+    const schedule = (s.weeklySchedule || []).map(sch => DAY_NAMES[sch.day] + sch.time).join('、');
+    html += `<div class="student-card-item" onclick="selectStudent('${s.id}')">
+      <div class="student-avatar" style="background:${color}">${s.name[0]}</div>
+      <div class="student-info">
+        <div class="student-name">${escapeHtml(s.name)} <span class="tag tag-grade">${s.grade}</span>${s.hourlyRate ? ` <span style="font-size:0.78em;color:var(--success)">¥${s.hourlyRate}/h</span>` : ''}</div>
+        <div class="student-meta">
+          <span>📚 ${totalSessions}节</span>
+          <span>⏱️ ${totalHours}h</span>
+          <span>📊 均分 ${avgScore}%</span>
+          ${schedule ? `<span>📅 ${schedule}</span>` : ''}
+        </div>
+      </div>
+      <div class="student-actions" onclick="event.stopPropagation()">
+        <button class="btn-icon" onclick="openEditStudent('${s.id}')" title="编辑">✏️</button>
+        <button class="btn-icon" onclick="deleteStudent('${s.id}')" title="删除">🗑️</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ============ WORKBENCH ============
+const DAY_NAMES = ['周日','周一','周二','周三','周四','周五','周六'];
+const SESSION_TYPES = {
+  knowledge: { label: '知识讲解', icon: '📖', tag: 'tag-knowledge' },
+  exercise: { label: '习题训练', icon: '✏️', tag: 'tag-exercise' },
+  psychology: { label: '心理疏导', icon: '💬', tag: 'tag-psychology' },
+  exam: { label: '考试讲评', icon: '📝', tag: 'tag-exam-review' },
+  review: { label: '复习巩固', icon: '🔄', tag: 'tag-review' }
+};
+
+function getTodaySchedule() {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const todayStr2 = todayStr();
+  const items = [];
+
+  appData.students.forEach(s => {
+    const schedule = s.weeklySchedule || [];
+    schedule.forEach(sch => {
+      if (sch.day === dayOfWeek) {
+        // Check if already recorded today
+        const recorded = (s.sessions || []).find(sess => sess.date === todayStr2 && sess.scheduledTime === sch.time);
+        items.push({
+          studentId: s.id,
+          studentName: s.name,
+          grade: s.grade,
+          time: sch.time,
+          duration: sch.duration || 1,
+          recorded: !!recorded,
+          session: recorded || null,
+          lastSession: s.sessions && s.sessions.length > 0 ? s.sessions[0] : null,
+          hourlyRate: s.hourlyRate || 0
+        });
+      }
+    });
+  });
+
+  items.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  return items;
+}
+
+function getWeekStats() {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+
+  let weekHours = 0, weekSessions = 0, weekIncome = 0;
+  appData.students.forEach(s => {
+    (s.sessions || []).forEach(sess => {
+      if (sess.date && sess.date >= weekStartStr) {
+        weekHours += sess.duration || 0;
+        weekSessions++;
+        weekIncome += (sess.duration || 0) * (s.hourlyRate || 0);
+      }
+    });
+  });
+  return { weekHours, weekSessions, weekIncome };
+}
+
+function getPendingFeedbacks() {
+  const items = [];
+  const todayStr2 = todayStr();
+  appData.students.forEach(s => {
+    (s.sessions || []).forEach(sess => {
+      if (sess.date === todayStr2 && !sess.feedbackSent) {
+        items.push({ studentId: s.id, studentName: s.name, session: sess });
+      }
+    });
+  });
+  return items;
+}
+
+function renderWorkbench(container) {
+  const today = new Date();
+  const todayStr2 = todayStr();
+  const dayName = DAY_NAMES[today.getDay()];
+  const dateStr = `${today.getMonth()+1}月${today.getDate()}日 ${dayName}`;
+  const schedule = getTodaySchedule();
+  const weekStats = getWeekStats();
+  const pendingFB = getPendingFeedbacks();
+  const totalStudents = appData.students.length;
+  const todayCount = schedule.length;
+  const doneCount = schedule.filter(s => s.recorded).length;
+
+  // Get recent issues
+  const openIssues = [];
+  appData.students.forEach(s => {
+    (s.issues || []).filter(i => i.status === 'open').forEach(i => {
+      openIssues.push({ ...i, studentName: s.name });
+    });
+  });
+
+  let html = `
+    <div class="wb-quick-stats">
+      <div class="wb-quick-stat">
+        <div class="wb-qs-val" style="color:var(--primary)">${todayCount}</div>
+        <div class="wb-qs-label">今日课程</div>
+      </div>
+      <div class="wb-quick-stat">
+        <div class="wb-qs-val" style="color:var(--success)">${doneCount}/${todayCount}</div>
+        <div class="wb-qs-label">已完成</div>
+      </div>
+      <div class="wb-quick-stat">
+        <div class="wb-qs-val">${weekStats.weekHours}h</div>
+        <div class="wb-qs-label">本周课时</div>
+      </div>
+      <div class="wb-quick-stat">
+        <div class="wb-qs-val" style="color:var(--success)">¥${weekStats.weekIncome}</div>
+        <div class="wb-qs-label">本周收入</div>
+      </div>
+    </div>
+
+    <div class="workbench-grid">
+      <div>
+        <!-- Today's Schedule -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <h3>📅 今日课程 — ${dateStr}</h3>
+            <span style="font-size:0.85em;color:var(--text-light)">${todayCount}节课</span>
+          </div>
+          <div class="card-body">
+  `;
+
+  if (schedule.length === 0) {
+    html += `
+      <div class="no-schedule">
+        <div style="font-size:2.5em;margin-bottom:8px">☕</div>
+        <p>今天没有排课，好好休息吧！</p>
+        <p style="font-size:0.8em;margin-top:4px">在「学生管理」中为学生设置每周固定上课时间</p>
+      </div>
+    `;
+  } else {
+    schedule.forEach(item => {
+      const doneClass = item.recorded ? 'schedule-done' : '';
+      const lastPreview = item.lastSession
+        ? `上次：${(item.lastSession.content || '').slice(0, 35)}${(item.lastSession.content || '').length > 35 ? '...' : ''}`
+        : '暂无历史记录';
+      html += `
+        <div class="schedule-card ${doneClass}">
+          <div class="schedule-time">
+            <span class="sc-time">${item.time || '--:--'}</span>
+            <span class="sc-dur">${item.duration}h</span>
+          </div>
+          <div class="schedule-body">
+            <div class="schedule-name">${escapeHtml(item.studentName)} <span class="tag tag-grade">${item.grade}</span></div>
+            <div class="schedule-preview">${escapeHtml(lastPreview)}</div>
+          </div>
+          <div class="schedule-actions">
+            ${item.recorded
+              ? `<button class="btn btn-sm btn-outline" style="color:var(--success)" disabled>✓ 已记录</button>`
+              : `<button class="btn btn-sm btn-primary" onclick="quickAddSession('${item.studentId}','${item.time}',${item.duration})">📝 记录课程</button>`
+            }
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  html += `
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <!-- Quick Actions -->
+        <div class="wb-side-section">
+          <div class="card">
+            <div class="card-header"><h3>⚡ 快速操作</h3></div>
+            <div class="card-body">
+              <div class="wb-action-grid">
+                <div class="wb-action-btn" onclick="openAddSessionFromBench()">
+                  <span class="wb-ab-icon">📝</span><span>记录课程</span>
+                </div>
+                <div class="wb-action-btn" onclick="quickFeedbackFromBench()">
+                  <span class="wb-ab-icon">📤</span><span>发送反馈</span>
+                </div>
+                <div class="wb-action-btn" onclick="switchPage('students')">
+                  <span class="wb-ab-icon">👥</span><span>学生管理</span>
+                </div>
+                <div class="wb-action-btn" onclick="switchPage('dashboard')">
+                  <span class="wb-ab-icon">📊</span><span>数据统计</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Feedbacks -->
+        ${pendingFB.length > 0 ? `
+        <div class="wb-side-section">
+          <div class="card">
+            <div class="card-header"><h3>📤 待发反馈 (${pendingFB.length})</h3></div>
+            <div class="card-body">
+              ${pendingFB.map(fb => `
+                <div class="wb-todo-item" onclick="selectStudent('${fb.studentId}');switchPage('sessions');setTimeout(()=>openFeedback(),100)">
+                  <div class="wb-todo-dot" style="background:var(--warning)"></div>
+                  <span>${escapeHtml(fb.studentName)} — 待发送课后反馈</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Issues -->
+        ${openIssues.length > 0 ? `
+        <div class="wb-side-section">
+          <div class="card">
+            <div class="card-header"><h3>🔍 待关注 (${openIssues.length})</h3></div>
+            <div class="card-body">
+              ${openIssues.slice(0, 5).map(iss => `
+                <div class="wb-todo-item">
+                  <div class="wb-todo-dot" style="background:var(--danger)"></div>
+                  <span><strong>${escapeHtml(iss.studentName)}</strong>: ${escapeHtml(iss.description.slice(0, 30))}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+function quickAddSession(studentId, time, duration) {
+  selectedStudentId = studentId;
+  openAddSession();
+  document.getElementById('sessDate').value = todayStr();
+  document.getElementById('sessDuration').value = duration;
+  // Store scheduled time for tracking
+  document.getElementById('sessionModal').dataset.scheduledTime = time;
+}
+
+function openAddSessionFromBench() {
+  if (appData.students.length === 0) {
+    alert('请先添加学生'); return;
+  }
+  if (appData.students.length === 1) {
+    selectedStudentId = appData.students[0].id;
+  } else {
+    // Show student picker
+    const names = appData.students.map((s, i) => `${i + 1}. ${s.name}`).join('\n');
+    const pick = prompt('选择学生（输入序号）：\n' + names);
+    if (!pick) return;
+    const idx = parseInt(pick) - 1;
+    if (idx < 0 || idx >= appData.students.length) return;
+    selectedStudentId = appData.students[idx].id;
+  }
+  openAddSession();
+}
+
+function quickFeedbackFromBench() {
+  if (appData.students.length === 0) {
+    alert('请先添加学生'); return;
+  }
+  // Find students with today's sessions
+  const todayStr2 = todayStr();
+  const withSessions = appData.students.filter(s =>
+    (s.sessions || []).some(sess => sess.date === todayStr2)
+  );
+  if (withSessions.length === 0) {
+    alert('今天还没有课程记录，请先记录课程'); return;
+  }
+  if (withSessions.length === 1) {
+    selectedStudentId = withSessions[0].id;
+  } else {
+    const names = withSessions.map((s, i) => `${i + 1}. ${s.name}`).join('\n');
+    const pick = prompt('选择学生（输入序号）：\n' + names);
+    if (!pick) return;
+    const idx = parseInt(pick) - 1;
+    if (idx < 0 || idx >= withSessions.length) return;
+    selectedStudentId = withSessions[idx].id;
+  }
+  switchPage('sessions');
+  setTimeout(() => openFeedback(), 100);
+}
+
+// ============ STUDENT PICKER ============
+function renderStudentPicker(container, pageName) {
+  if (appData.students.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>还没有学生，请先添加学生</p><button class="btn btn-primary" onclick="openAddStudent()">+ 添加学生</button></div>`;
+    return;
+  }
+  let html = `<div style="max-width:500px;margin:40px auto">
+    <h3 style="text-align:center;margin-bottom:20px">选择一位学生</h3>
+    <div class="student-list">`;
+  appData.students.forEach((s, i) => {
+    const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    html += `<div class="student-card-item" onclick="selectedStudentId='${s.id}';renderStudentSwitcher();renderPage()">
+      <div class="student-avatar" style="background:${color}">${s.name[0]}</div>
+      <div class="student-info">
+        <div class="student-name">${escapeHtml(s.name)} <span class="tag tag-grade">${s.grade}</span></div>
+      </div>
+    </div>`;
+  });
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+// ============ CALENDAR ============
+let calWeekOffset = 0;
+
+function getMonday(offset) {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff + offset * 7);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatDateShort(d) {
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function getStudentColor(studentId) {
+  const idx = appData.students.findIndex(s => s.id === studentId);
+  return AVATAR_COLORS[idx >= 0 ? idx % AVATAR_COLORS.length : 0];
+}
+
+function getAllScheduleItems() {
+  const items = [];
+  appData.students.forEach(s => {
+    (s.weeklySchedule || []).forEach((sch, idx) => {
+      items.push({
+        studentId: s.id,
+        studentName: s.name,
+        grade: s.grade,
+        day: sch.day,
+        time: sch.time,
+        duration: sch.duration || 1,
+        scheduleIdx: idx,
+        color: getStudentColor(s.id)
+      });
+    });
+  });
+  return items;
+}
+
+function getWeekSessions(monday) {
+  const sessions = [];
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  const startStr = monday.toISOString().slice(0, 10);
+  const endStr = sunday.toISOString().slice(0, 10);
+
+  appData.students.forEach(s => {
+    (s.sessions || []).forEach(sess => {
+      if (sess.date && sess.date >= startStr && sess.date <= endStr) {
+        sessions.push({ ...sess, studentId: s.id, studentName: s.name });
+      }
+    });
+  });
+  return sessions;
+}
+
+function renderCalendar(container) {
+  const monday = getMonday(calWeekOffset);
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayDay = today.getDay(); // 0=Sun, 1=Mon...
+
+  const weekLabel = `${monday.getMonth()+1}月${monday.getDate()}日 — ${sunday.getMonth()+1}月${sunday.getDate()}日`;
+  const isCurrentWeek = calWeekOffset === 0;
+
+  const scheduleItems = getAllScheduleItems();
+  const weekSessions = getWeekSessions(monday);
+
+  // Build day headers (Mon=1 .. Sun=0)
+  const dayOrder = [1, 2, 3, 4, 5, 6, 0];
+  const dayDateMap = {};
+  dayOrder.forEach((dow, i) => {
+    const dd = new Date(monday);
+    dd.setDate(dd.getDate() + i);
+    dayDateMap[dow] = dd;
+  });
+
+  // Time slots: 8:00 to 22:00
+  const startHour = 8;
+  const endHour = 23;
+
+  let html = `
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button class="btn btn-outline btn-sm" onclick="calWeekOffset--;renderPage()">◀</button>
+        <button class="btn btn-outline btn-sm" onclick="calWeekOffset=0;renderPage()">今天</button>
+        <button class="btn btn-outline btn-sm" onclick="calWeekOffset++;renderPage()">▶</button>
+      </div>
+      <div class="cal-week-label">${weekLabel}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="exportCalendarImage()">📸 生成课表图片</button>
+        <button class="btn btn-primary btn-sm" onclick="openScheduleModal()">+ 添加排课</button>
+      </div>
+    </div>
+    <div class="cal-grid-wrap">
+      <div class="cal-grid">
+        <div class="cal-corner">时间</div>
+  `;
+
+  // Day headers
+  dayOrder.forEach(dow => {
+    const dd = dayDateMap[dow];
+    const isToday = dd.getTime() === today.getTime();
+    html += `<div class="cal-day-header ${isToday ? 'cal-today' : ''}">
+      ${DAY_NAMES[dow]}
+      <span class="cal-day-date">${dd.getDate()}</span>
+    </div>`;
+  });
+
+  // Time rows
+  for (let h = startHour; h < endHour; h++) {
+    const timeStr = `${String(h).padStart(2, '0')}:00`;
+    html += `<div class="cal-time-label">${timeStr}</div>`;
+
+    dayOrder.forEach(dow => {
+      const dd = dayDateMap[dow];
+      const isToday = dd.getTime() === today.getTime();
+      const dateStr = dd.toISOString().slice(0, 10);
+
+      // Find schedule items starting at this hour
+      const cellItems = scheduleItems.filter(s => {
+        if (s.day !== dow || !s.time) return false;
+        const startH = parseInt(s.time.split(':')[0]);
+        const startM = parseInt(s.time.split(':')[1] || '0');
+        const slotStart = h * 60;
+        const itemStart = startH * 60 + startM;
+        return itemStart >= slotStart && itemStart < slotStart + 60;
+      });
+      // Find recorded sessions for this cell
+      const cellSessions = weekSessions.filter(s => s.date === dateStr && s.scheduledTime && parseInt(s.scheduledTime.split(':')[0]) === h);
+
+      html += `<div class="cal-cell ${isToday ? 'cal-today-col' : ''}" onclick="calCellClick(${dow},'${timeStr}')">`;
+
+      // Render schedule items (only at their start hour, spanning full duration)
+      cellItems.forEach(item => {
+        const recorded = cellSessions.some(s => s.studentId === item.studentId);
+        const opacity = recorded ? '0.55' : '1';
+        const checkmark = recorded ? ' ✓' : '';
+        const eventH = item.duration * 38 - 2;
+        const minStart = parseInt((item.time || '0:00').split(':')[1] || '0');
+        const topOffset = (minStart / 60) * 38 + 1;
+        html += `<div class="cal-event" style="background:${item.color};opacity:${opacity};height:${eventH}px;top:${topOffset}px" onclick="event.stopPropagation();openScheduleModal('${item.studentId}',${item.scheduleIdx})" title="${item.studentName} ${item.time} (${item.duration}h)${recorded ? ' - 已上课' : ''}">
+          <span class="cal-event-name">${item.studentName}${checkmark}</span>
+          <span class="cal-event-time">${item.time} · ${item.duration}h</span>
+        </div>`;
+      });
+
+      html += `</div>`;
+    });
+  }
+
+  html += `</div>`;
+
+  html += `</div>`; // close cal-grid
+
+  // Now line for current week
+  if (isCurrentWeek) {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    if (currentHour >= startHour && currentHour < endHour) {
+      const rowHeight = 38;
+      const offset = (currentHour - startHour) * rowHeight + (currentMin / 60) * rowHeight + 38;
+      html += `<div style="position:relative;height:0"><div class="cal-now-line" style="top:${offset}px;left:60px;right:0"></div></div>`;
+    }
+  }
+
+  html += `</div>`; // close cal-grid-wrap
+
+  // Summary section
+  const totalScheduledHours = scheduleItems.reduce((a, s) => a + s.duration, 0);
+  const perStudent = {};
+  scheduleItems.forEach(s => {
+    if (!perStudent[s.studentName]) perStudent[s.studentName] = 0;
+    perStudent[s.studentName] += s.duration;
+  });
+
+  html += `
+    <div class="cal-summary">
+      <div class="cal-summary-card">
+        <div class="cs-label">每周总排课</div>
+        <div class="cs-value">${totalScheduledHours} 小时</div>
+        <div class="cs-detail">${scheduleItems.length} 节课</div>
+      </div>
+      <div class="cal-summary-card">
+        <div class="cs-label">学生分布</div>
+        <div class="cs-value">${Object.keys(perStudent).length} 位学生</div>
+        <div class="cs-detail">${Object.entries(perStudent).map(([n, h]) => `${n} ${h}h`).join('、') || '暂无排课'}</div>
+      </div>
+      <div class="cal-summary-card">
+        <div class="cs-label">本周上课</div>
+        <div class="cs-value">${weekSessions.length} 节已记录</div>
+        <div class="cs-detail">${weekSessions.reduce((a, s) => a + (s.duration || 0), 0)} 小时</div>
+      </div>
+    </div>
+  `;
+
+  // Legend
+  if (appData.students.length > 0) {
+    html += `<div class="cal-legend">`;
+    appData.students.forEach(s => {
+      html += `<div class="cal-legend-item"><div class="cal-legend-dot" style="background:${getStudentColor(s.id)}"></div>${escapeHtml(s.name)}</div>`;
+    });
+    html += `<div class="cal-legend-item"><div class="cal-legend-dot" style="background:#ccc;opacity:0.5"></div>已上课（灰色）</div>`;
+    html += `</div>`;
+  }
+
+  // Weekly comparison charts
+  html += `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+      <div class="card">
+        <div class="card-header"><h3>⏱️ 每周课时对比</h3></div>
+        <div class="card-body"><div class="chart-container"><canvas id="weekHoursChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>💰 每周收入对比</h3></div>
+        <div class="card-body"><div class="chart-container"><canvas id="weekIncomeChart"></canvas></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><h3>📊 单位课时收入单价</h3></div>
+      <div class="card-body"><div class="chart-container"><canvas id="weekRateChart"></canvas></div></div>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Prepare data for all three charts
+  const weekLabels = [];
+  const planHoursData = [], actualHoursData = [];
+  const planIncomeData = [], actualIncomeData = [];
+  const planRateData = [], actualRateData = [];
+
+  // 从5月第一个周一开始，到本周
+  const mayFirst = new Date(new Date().getFullYear(), 4, 1); // 5月1日
+  const mayMonday = new Date(mayFirst);
+  const dow = mayFirst.getDay();
+  mayMonday.setDate(mayFirst.getDate() - (dow === 0 ? 6 : dow - 1));
+  const thisMonday = getMonday(0);
+  const weeks = [];
+  const tmp = new Date(mayMonday);
+  while (tmp <= thisMonday) {
+    weeks.push(new Date(tmp));
+    tmp.setDate(tmp.getDate() + 7);
+  }
+  for (const m of weeks) {
+    const mEnd = new Date(m); mEnd.setDate(mEnd.getDate() + 6);
+    const mStr = m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0')+'-'+String(m.getDate()).padStart(2,'0');
+    const mEndStr = mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-'+String(mEnd.getDate()).padStart(2,'0');
+    weekLabels.push(`${m.getMonth()+1}/${m.getDate()}-${mEnd.getMonth()+1}/${mEnd.getDate()}`);
+
+    // 计划课时和收入
+    let planH = 0, planIncome = 0;
+    appData.students.forEach(s => {
+      (s.weeklySchedule || []).forEach(item => {
+        planH += item.duration || 0;
+        planIncome += (item.duration || 0) * (s.hourlyRate || 0);
+      });
+    });
+    planHoursData.push(planH);
+    planIncomeData.push(planIncome);
+    planRateData.push(planH > 0 ? Math.round(planIncome / planH) : 0);
+
+    // 实际课时和收入
+    let actH = 0, actIncome = 0;
+    appData.students.forEach(s => {
+      (s.sessions || []).forEach(sess => {
+        if (sess.date && sess.date >= mStr && sess.date <= mEndStr) {
+          actH += sess.duration || 0;
+          if (sess.paid !== false) actIncome += (sess.duration || 0) * (s.hourlyRate || 0);
+        }
+      });
+    });
+    actualHoursData.push(actH);
+    actualIncomeData.push(actIncome);
+    actualRateData.push(actH > 0 ? Math.round(actIncome / actH) : 0);
+  }
+
+  // Chart 1: 每周课时对比
+  setTimeout(() => {
+    const ctx1 = document.getElementById('weekHoursChart');
+    if (ctx1) {
+      new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: weekLabels,
+          datasets: [
+            { label: '计划', data: planHoursData, backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 4 },
+            { label: '实际', data: actualHoursData, backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { callback: v => v + 'h' } } },
+          plugins: { legend: { position: 'top' } }
+        }
+      });
+    }
+
+    // Chart 2: 每周收入对比
+    const ctx2 = document.getElementById('weekIncomeChart');
+    if (ctx2) {
+      new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: weekLabels,
+          datasets: [
+            { label: '计划', data: planIncomeData, backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 4 },
+            { label: '实际', data: actualIncomeData, backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { callback: v => '¥' + v } } },
+          plugins: { legend: { position: 'top' } }
+        }
+      });
+    }
+
+    // Chart 3: 单位课时收入单价
+    const ctx3 = document.getElementById('weekRateChart');
+    if (ctx3) {
+      new Chart(ctx3, {
+        type: 'line',
+        data: {
+          labels: weekLabels,
+          datasets: [
+            { label: '计划单价', data: planRateData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.3, pointRadius: 4 },
+            { label: '实际单价', data: actualRateData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3, pointRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { callback: v => '¥' + v + '/h' } } },
+          plugins: { legend: { position: 'top' } }
+        }
+      });
+    }
+  }, 100);
+}
+
+async function exportCalendarImage() {
+  const gridWrap = document.querySelector('.cal-grid-wrap');
+  if (!gridWrap) return;
+  const btn = event.target;
+  btn.textContent = '生成中...';
+  btn.disabled = true;
+  try {
+    const canvas = await html2canvas(gridWrap, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      logging: false
+    });
+    const link = document.createElement('a');
+    const monday = getMonday(calWeekOffset);
+    const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+    link.download = `课表_${monday.getMonth()+1}.${monday.getDate()}-${sunday.getMonth()+1}.${sunday.getDate()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    alert('生成失败：' + e.message);
+  }
+  btn.textContent = '📸 生成课表图片';
+  btn.disabled = false;
+}
+
+function calCellClick(day, time) {
+  openScheduleModal(null, null, day, time);
+}
+
+function openScheduleModal(studentId, scheduleIdx, day, time) {
+  const sel = document.getElementById('schedStudent');
+  sel.innerHTML = appData.students.map(s =>
+    `<option value="${s.id}">${escapeHtml(s.name)}（${s.grade}）</option>`
+  ).join('');
+
+  const deleteBtn = document.getElementById('schedDeleteBtn');
+
+  if (studentId && scheduleIdx !== undefined && scheduleIdx !== null) {
+    // Edit mode
+    const s = getStudent(studentId);
+    if (!s) return;
+    const sch = s.weeklySchedule[scheduleIdx];
+    if (!sch) return;
+    document.getElementById('scheduleModalTitle').textContent = '编辑排课';
+    document.getElementById('editScheduleStudentId').value = studentId;
+    document.getElementById('editScheduleIdx').value = scheduleIdx;
+    sel.value = studentId;
+    document.getElementById('schedDay').value = sch.day;
+    document.getElementById('schedTime').value = sch.time || '19:00';
+    document.getElementById('schedDuration').value = sch.duration || 1;
+    deleteBtn.style.display = '';
+  } else {
+    // Add mode
+    document.getElementById('scheduleModalTitle').textContent = '添加排课';
+    document.getElementById('editScheduleStudentId').value = '';
+    document.getElementById('editScheduleIdx').value = '';
+    if (day !== undefined) document.getElementById('schedDay').value = day;
+    if (time !== undefined) document.getElementById('schedTime').value = time;
+    else document.getElementById('schedTime').value = '19:00';
+    document.getElementById('schedDuration').value = '1';
+    deleteBtn.style.display = 'none';
+  }
+
+  if (appData.students.length === 0) {
+    alert('请先添加学生'); return;
+  }
+
+  openModal('scheduleModal');
+}
+
+function saveSchedule() {
+  const studentId = document.getElementById('schedStudent').value;
+  const s = getStudent(studentId);
+  if (!s) { alert('请选择学生'); return; }
+
+  const day = parseInt(document.getElementById('schedDay').value);
+  const time = document.getElementById('schedTime').value;
+  const duration = parseFloat(document.getElementById('schedDuration').value);
+  const editStudentId = document.getElementById('editScheduleStudentId').value;
+  const editIdx = document.getElementById('editScheduleIdx').value;
+
+  if (editStudentId && editIdx !== '') {
+    // Editing existing entry
+    const origStudent = getStudent(editStudentId);
+    if (origStudent && origStudent.weeklySchedule[parseInt(editIdx)]) {
+      if (editStudentId !== studentId) {
+        // Moved to different student: remove from old, add to new
+        origStudent.weeklySchedule.splice(parseInt(editIdx), 1);
+        if (!s.weeklySchedule) s.weeklySchedule = [];
+        s.weeklySchedule.push({ day, time, duration });
+      } else {
+        // Same student: update in place
+        origStudent.weeklySchedule[parseInt(editIdx)] = { day, time, duration };
+      }
+    }
+  } else {
+    // Adding new entry
+    if (!s.weeklySchedule) s.weeklySchedule = [];
+    // Check for duplicate
+    const dup = s.weeklySchedule.find(sch => sch.day === day && sch.time === time);
+    if (dup) { alert('该学生在这个时间段已有排课'); return; }
+    s.weeklySchedule.push({ day, time, duration });
+  }
+
+  saveData(appData);
+  closeModal('scheduleModal');
+  renderPage();
+}
+
+function deleteSchedule() {
+  const studentId = document.getElementById('editScheduleStudentId').value;
+  const editIdx = document.getElementById('editScheduleIdx').value;
+  if (!studentId || editIdx === '') return;
+  if (!confirm('确定删除此排课？')) return;
+
+  const s = getStudent(studentId);
+  if (s && s.weeklySchedule) {
+    s.weeklySchedule.splice(parseInt(editIdx), 1);
+    saveData(appData);
+  }
+  closeModal('scheduleModal');
+  renderPage();
+}
+
+// ============ DASHBOARD ============
+function renderDashboard(container) {
+  const students = appData.students;
+  const totalStudents = students.length;
+  const thisMonth = todayStr().slice(0,7);
+  let monthHours = 0, monthSessions = 0, totalSessions = 0;
+  let monthIncome = 0, totalIncome = 0;
+  let upcomingExams = [];
+  let recentSessions = [];
+
+  students.forEach(s => {
+    totalSessions += s.sessions.length;
+    s.sessions.forEach(sess => {
+      const cost = (sess.duration || 0) * (s.hourlyRate || 0);
+      if (sess.paid !== false) totalIncome += cost;
+      if (sess.date && sess.date.startsWith(thisMonth)) {
+        monthHours += sess.duration || 0;
+        monthSessions++;
+        if (sess.paid !== false) monthIncome += cost;
+      }
+      recentSessions.push({ ...sess, studentName: s.name, studentId: s.id });
+    });
+    s.exams.forEach(e => {
+      if (e.date >= todayStr()) upcomingExams.push({ ...e, studentName: s.name });
+    });
+  });
+
+  recentSessions.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  upcomingExams.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+
+  let html = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${totalStudents}</div><div class="stat-label">学生总数</div></div>
+      <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value">${monthSessions}</div><div class="stat-label">本月上课次数</div></div>
+      <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value">${monthHours}h</div><div class="stat-label">本月课时</div></div>
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--success)">¥${monthIncome}</div><div class="stat-label">本月收入</div></div>
+    </div>
+
+    <!-- Financial Overview -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>💰 收入统计</h3></div>
+      <div class="card-body">
+        <div class="fin-stat-grid">
+          ${students.map(s => {
+            const sMonthHours = (s.sessions||[]).filter(sess => sess.date && sess.date.startsWith(thisMonth)).reduce((a, sess) => a + (sess.duration||0), 0);
+            const sMonthIncome = (s.sessions||[]).filter(sess => sess.date && sess.date.startsWith(thisMonth) && sess.paid !== false).reduce((a, sess) => a + (sess.duration||0) * (s.hourlyRate||0), 0);
+            const unpaid = (s.sessions||[]).filter(sess => sess.paid === false).reduce((a, sess) => a + (sess.duration||0) * (s.hourlyRate||0), 0);
+            return `<div class="fin-stat-card">
+              <div style="font-weight:600;font-size:0.9em;margin-bottom:6px">${escapeHtml(s.name)}</div>
+              <div class="fin-val">¥${sMonthIncome}</div>
+              <div class="fin-label">本月 ${sMonthHours}h · 课时费 ¥${s.hourlyRate||0}/h${unpaid > 0 ? ` · <span style="color:var(--danger)">未结 ¥${unpaid}</span>` : ''}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="text-align:right;font-size:0.9em;color:var(--text-light);padding-top:8px;border-top:1px solid var(--border)">
+          累计总收入：<strong style="color:var(--success);font-size:1.1em">¥${totalIncome}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="card-header"><h3>📝 最近课程</h3></div>
+        <div class="card-body">
+          ${recentSessions.length === 0 ? '<div style="color:var(--text-light);text-align:center;padding:20px">暂无课程记录</div>' :
+            recentSessions.slice(0,8).map(s => {
+              const typeInfo = SESSION_TYPES[s.type] || SESSION_TYPES.knowledge;
+              return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.85em">
+                <span><strong>${escapeHtml(s.studentName)}</strong> <span class="tag ${typeInfo.tag}" style="font-size:0.7em">${typeInfo.label}</span> ${escapeHtml((s.content||'').slice(0,25))}${(s.content||'').length>25?'...':''}</span>
+                <span style="color:var(--text-light)">${s.date||'-'}</span>
+              </div>`;
+            }).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>🎯 待关注事项</h3></div>
+        <div class="card-body">
+          ${(() => {
+            const issues = [];
+            students.forEach(s => {
+              const openIssues = (s.issues||[]).filter(i => i.status === 'open');
+              openIssues.forEach(i => issues.push({ ...i, studentName: s.name }));
+            });
+            if (issues.length === 0) return '<div style="color:var(--text-light);text-align:center;padding:20px">暂无待解决问题</div>';
+            return issues.slice(0,8).map(i => `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:0.85em">
+              <strong>${escapeHtml(i.studentName)}</strong>: ${escapeHtml((i.description||'').slice(0,40))}${(i.description||'').length>40?'...':''}
+            </div>`).join('');
+          })()}
+        </div>
+      </div>
+    </div>
+    ${upcomingExams.length > 0 ? `
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><h3>📅 近期考试</h3></div>
+      <div class="card-body">
+        <table><tr><th>学生</th><th>考试</th><th>日期</th><th>类型</th></tr>
+        ${upcomingExams.map(e => `<tr><td>${escapeHtml(e.studentName)}</td><td>${escapeHtml(e.name)}</td><td>${e.date}</td><td><span class="tag tag-grade">${e.type}</span></td></tr>`).join('')}
+        </table>
+      </div>
+    </div>` : ''}
+  `;
+  container.innerHTML = html;
+}
+
+// ============ SESSIONS ============
+function openAddSession() {
+  document.getElementById('sessionModalTitle').textContent = '添加课程';
+  document.getElementById('editSessionId').value = '';
+  document.getElementById('sessDate').value = todayStr();
+  document.getElementById('sessDuration').value = 1;
+  document.getElementById('sessType').value = 'knowledge';
+  ['sessContent','sessHomework','sessNotes','sessMeetingSummary'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sessPaid').checked = true;
+  boardImages = [];
+  renderBoardThumbs();
+  setTimeout(initBoardUpload, 50);
+  openModal('sessionModal');
+}
+
+function openEditSession(sid) {
+  const s = getStudent(selectedStudentId);
+  const sess = s.sessions.find(x => x.id === sid);
+  if (!sess) return;
+  document.getElementById('sessionModalTitle').textContent = '编辑课程';
+  document.getElementById('editSessionId').value = sid;
+  document.getElementById('sessDate').value = sess.date || '';
+  document.getElementById('sessDuration').value = sess.duration || 1;
+  document.getElementById('sessType').value = sess.type || 'knowledge';
+  document.getElementById('sessContent').value = sess.content || '';
+  document.getElementById('sessHomework').value = sess.homework || '';
+  document.getElementById('sessNotes').value = sess.notes || '';
+  document.getElementById('sessMeetingSummary').value = sess.meetingSummary || '';
+  document.getElementById('sessPaid').checked = sess.paid !== false;
+  boardImages = (sess.boardImages || []).slice();
+  renderBoardThumbs();
+  setTimeout(initBoardUpload, 50);
+  openModal('sessionModal');
+}
+
+function saveSession() {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  const content = document.getElementById('sessContent').value.trim();
+  if (!content) { alert('请输入教学内容'); return; }
+  const editId = document.getElementById('editSessionId').value;
+  const modal = document.getElementById('sessionModal');
+  const sessData = {
+    date: document.getElementById('sessDate').value,
+    duration: parseFloat(document.getElementById('sessDuration').value) || 1,
+    type: document.getElementById('sessType').value,
+    content, homework: document.getElementById('sessHomework').value.trim(),
+    notes: document.getElementById('sessNotes').value.trim(),
+    boardImages: boardImages.slice(),
+    meetingSummary: document.getElementById('sessMeetingSummary').value.trim(),
+    paid: document.getElementById('sessPaid').checked,
+    scheduledTime: modal.dataset.scheduledTime || ''
+  };
+  delete modal.dataset.scheduledTime;
+  if (editId) {
+    const idx = s.sessions.findIndex(x => x.id === editId);
+    if (idx >= 0) Object.assign(s.sessions[idx], sessData);
+  } else {
+    s.sessions.push({ id: genId(), ...sessData, feedbackSent: false, createdAt: Date.now() });
+  }
+  s.sessions.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  saveData(appData);
+  closeModal('sessionModal');
+  renderPage();
+}
+
+function deleteSession(sid) {
+  if (!confirm('确定删除此课程记录？')) return;
+  const s = getStudent(selectedStudentId);
+  s.sessions = s.sessions.filter(x => x.id !== sid);
+  saveData(appData);
+  renderPage();
+}
+
+function duplicateSession(sid) {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  const orig = s.sessions.find(x => x.id === sid);
+  if (!orig) return;
+  let nextDate = todayStr();
+  if (orig.date) {
+    const d = new Date(orig.date + 'T00:00:00');
+    d.setDate(d.getDate() + 7);
+    nextDate = d.toISOString().slice(0,10);
+  }
+  s.sessions.push({
+    id: genId(), date: nextDate, duration: orig.duration,
+    type: orig.type || 'knowledge',
+    content: orig.content, homework: orig.homework, notes: '',
+    boardImages: [], meetingSummary: '', paid: true, feedbackSent: false,
+    createdAt: Date.now()
+  });
+  s.sessions.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  saveData(appData);
+  renderPage();
+}
+
+function renderSessions(container) {
+  const s = getStudent(selectedStudentId);
+  if (!s) { renderStudentPicker(container, currentPage); return; }
+  const totalHours = s.sessions.reduce((a,b) => a + (b.duration||0), 0);
+  let html = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-value">${s.sessions.length}</div><div class="stat-label">总上课次数</div></div>
+      <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value">${totalHours}</div><div class="stat-label">总课时</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3>📝 ${escapeHtml(s.name)} 的课程记录</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-success btn-sm" onclick="openFeedback()">📤 课后反馈</button>
+          <button class="btn btn-primary btn-sm" onclick="openAddSession()">+ 添加课程</button>
+        </div>
+      </div>
+      <div class="card-body">
+  `;
+  if (s.sessions.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">📝</div><p>还没有课程记录</p></div>';
+  } else {
+    html += '<div class="table-wrap"><table><tr><th>日期</th><th>时长</th><th>类型</th><th>教学内容</th><th>板书</th><th>反馈</th><th>操作</th></tr>';
+    s.sessions.forEach(sess => {
+      const typeInfo = SESSION_TYPES[sess.type] || SESSION_TYPES.knowledge;
+      const fbSent = sess.feedbackSent ? '<span style="color:var(--success)">✓</span>' : '<span style="color:var(--text-light)">—</span>';
+      html += `<tr>
+        <td>${sess.date||'-'}</td>
+        <td>${sess.duration||'-'}h</td>
+        <td><span class="tag ${typeInfo.tag}">${typeInfo.icon} ${typeInfo.label}</span></td>
+        <td style="max-width:180px" title="${escapeHtml(sess.content||'')}">${escapeHtml((sess.content||'').slice(0,50))}${(sess.content||'').length>50?'...':''}</td>
+        <td style="max-width:100px">${(sess.boardImages && sess.boardImages.length > 0) ? '<span style="color:var(--success)">'+sess.boardImages.length+'张</span>' : '—'}</td>
+        <td>${fbSent}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-outline" style="color:var(--success)" onclick="openFeedbackForSession('${sess.id}')" title="生成课后反馈">反馈</button>
+          <button class="btn btn-sm btn-outline" onclick="duplicateSession('${sess.id}')" title="复制此课程">复制</button>
+          <button class="btn btn-sm btn-outline" onclick="openEditSession('${sess.id}')">编辑</button>
+          <button class="btn btn-sm btn-outline" style="color:var(--danger)" onclick="deleteSession('${sess.id}')">删除</button>
+        </td>
+      </tr>`;
+    });
+    html += '</table></div>';
+  }
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+// ============ SESSION TEMPLATES ============
+const SESSION_TEMPLATES = {
+  new: {
+    content: '【新课讲解】\n知识点：\n例题：\n练习：',
+    homework: '课后习题：\n预习内容：',
+    notes: ''
+  },
+  exercise: {
+    content: '【习题训练】\n训练范围：\n题量：\n重点题型：',
+    homework: '错题整理：\n薄弱环节练习：',
+    notes: ''
+  },
+  review: {
+    content: '【复习巩固】\n复习模块：\n回顾重点：\n查漏补缺：',
+    homework: '复习笔记整理：\n针对性练习：',
+    notes: ''
+  },
+  exam: {
+    content: '【考试讲评】\n考试名称：\n得分情况：\n错题分析：',
+    homework: '错题重做：\n薄弱知识点复习：',
+    notes: ''
+  },
+  mistake: {
+    content: '【错题分析】\n错题来源：\n错误类型：\n知识点：',
+    homework: '同类题型巩固：',
+    notes: ''
+  },
+  weak: {
+    content: '【专项突破】\n突破模块：\n训练方法：\n掌握情况：',
+    homework: '专项练习：',
+    notes: ''
+  }
+};
+
+function applyTemplate(type) {
+  const tpl = SESSION_TEMPLATES[type];
+  if (!tpl) return;
+  document.getElementById('sessContent').value = tpl.content;
+  document.getElementById('sessHomework').value = tpl.homework;
+  if (tpl.notes) document.getElementById('sessNotes').value = tpl.notes;
+}
+
+function copyLastSession() {
+  const s = getStudent(selectedStudentId);
+  if (!s || s.sessions.length === 0) {
+    alert('没有历史课程记录可复用'); return;
+  }
+  const last = s.sessions[0];
+  document.getElementById('sessContent').value = last.content || '';
+  document.getElementById('sessHomework').value = last.homework || '';
+  document.getElementById('sessDuration').value = last.duration || 1;
+  document.getElementById('sessType').value = last.type || 'knowledge';
+  // Auto-fill next date (7 days later)
+  if (last.date) {
+    const d = new Date(last.date + 'T00:00:00');
+    d.setDate(d.getDate() + 7);
+    document.getElementById('sessDate').value = d.toISOString().slice(0,10);
+  }
+}
+
+function insertNote(text) {
+  const el = document.getElementById('sessNotes');
+  const cur = el.value.trim();
+  el.value = cur ? cur + '；' + text : text;
+}
+
+// ============ BOARD IMAGE HANDLING ============
+let boardImages = []; // temp array for current session editing
+
+function compressImage(file, maxWidth, quality) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = h * maxWidth / w; w = maxWidth; }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleBoardFiles(files) {
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    const dataUrl = await compressImage(file, 800, 0.6);
+    boardImages.push(dataUrl);
+  }
+  renderBoardThumbs();
+}
+
+function renderBoardThumbs() {
+  const container = document.getElementById('boardThumbs');
+  const hint = document.getElementById('boardUploadHint');
+  if (!container) return;
+  if (boardImages.length === 0) {
+    container.innerHTML = '';
+    if (hint) hint.style.display = '';
+    return;
+  }
+  if (hint) hint.style.display = 'none';
+  container.innerHTML = boardImages.map((img, i) => `
+    <div class="board-thumb" onclick="event.stopPropagation();previewBoardImage(${i})">
+      <img src="${img}">
+      <button class="board-thumb-remove" onclick="event.stopPropagation();removeBoardImage(${i})">&times;</button>
+    </div>
+  `).join('');
+}
+
+function removeBoardImage(idx) {
+  boardImages.splice(idx, 1);
+  renderBoardThumbs();
+}
+
+function previewBoardImage(idx) {
+  const overlay = document.getElementById('boardPreviewOverlay');
+  const img = document.getElementById('boardPreviewImg');
+  if (overlay && img && boardImages[idx]) {
+    img.src = boardImages[idx];
+    overlay.classList.add('show');
+  }
+}
+
+function initBoardUpload() {
+  const area = document.getElementById('boardUploadArea');
+  if (!area) return;
+
+  // Drag and drop
+  area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('drag-over'); });
+  area.addEventListener('dragleave', () => { area.classList.remove('drag-over'); });
+  area.addEventListener('drop', (e) => {
+    e.preventDefault();
+    area.classList.remove('drag-over');
+    if (e.dataTransfer.files.length > 0) handleBoardFiles(e.dataTransfer.files);
+  });
+
+  // Paste
+  document.addEventListener('paste', function onPaste(e) {
+    if (!document.getElementById('sessionModal') || !document.getElementById('sessionModal').classList.contains('show')) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) handleBoardFiles([file]);
+      }
+    }
+  });
+}
+
+// ============ POST-CLASS FEEDBACK ============
+const ENCOURAGEMENTS = [
+  '每一点进步都值得肯定，继续加油！',
+  '学习是一个积累的过程，坚持就是胜利！',
+  '只要保持这份努力，一定会看到收获！',
+  '相信自己，你比想象中更优秀！',
+  '今天的付出，就是明天的收获！',
+  '一步一个脚印，进步看得见！',
+  '遇到困难不可怕，可怕的是放弃！',
+  '保持好奇心，数学的世界很精彩！',
+  '认真对待每一节课，你已经在进步了！',
+  '努力的孩子最棒，为你的坚持点赞！',
+];
+
+function openFeedback() {
+  const s = getStudent(selectedStudentId);
+  if (!s || s.sessions.length === 0) {
+    alert('暂无课程记录，无法生成反馈'); return;
+  }
+  const sel = document.getElementById('feedbackSessionSelect');
+  sel.innerHTML = s.sessions.map((sess, i) => {
+    const typeInfo = SESSION_TYPES[sess.type] || SESSION_TYPES.knowledge;
+    return `<option value="${i}">${sess.date || '未知日期'} ${typeInfo.icon} ${(sess.content||'').slice(0,20)}${(sess.content||'').length>20?'...':''}</option>`;
+  }).join('');
+  openModal('feedbackModal');
+  generateFeedback();
+}
+
+function generateFeedback() {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  const idx = parseInt(document.getElementById('feedbackSessionSelect').value);
+  const sess = s.sessions[idx];
+  if (!sess) return;
+
+  const typeInfo = SESSION_TYPES[sess.type] || SESSION_TYPES.knowledge;
+  const encourage = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+  const weakMods = Object.entries(s.modules||{}).filter(([k,v]) => v >= 1 && v <= 2).map(([k]) => k);
+  const strongMods = Object.entries(s.modules||{}).filter(([k,v]) => v >= 3).map(([k]) => k);
+  const contentLines = (sess.content || '').split('\n').filter(l => l.trim());
+
+  let fb = '';
+
+  // Psychology sessions get a different template
+  if (sess.type === 'psychology') {
+    fb += `亲爱的家长您好！以下是${s.name}本次课程的沟通反馈：\n\n`;
+    fb += `📅 沟通日期：${sess.date || todayStr()}\n\n`;
+    fb += `💬 沟通内容\n`;
+    fb += `本次课程我们进行了一次深入的学习沟通交流，主要围绕以下方面：\n`;
+    contentLines.forEach(line => { fb += `${line}\n`; });
+    fb += '\n';
+    if (sess.notes) {
+      fb += `📋 老师观察\n`;
+      fb += `${sess.notes}\n\n`;
+    }
+    fb += `🌟 老师寄语\n`;
+    fb += `${encourage}\n`;
+    fb += `${s.name}是一个有潜力的孩子，通过今天的沟通，我相信TA会以更好的状态投入到后续的学习中。`;
+    fb += `作为老师，我会持续关注TA的心理状态和学习情况，也请家长在日常生活中多给予鼓励和支持。\n\n`;
+    fb += `如有任何问题，欢迎随时沟通交流。`;
+  } else {
+    // Normal teaching feedback
+    fb += `亲爱的家长您好！以下是${s.name}本次课程的学习反馈：\n\n`;
+
+    fb += `📚 课程信息\n`;
+    fb += `上课日期：${sess.date || todayStr()}\n`;
+    fb += `课程类型：${typeInfo.label}\n`;
+    fb += `课程时长：${sess.duration || 1}小时\n\n`;
+
+    fb += `📖 本节课内容\n`;
+    if (contentLines.length > 0) {
+      contentLines.forEach(line => { fb += `${line}\n`; });
+    } else {
+      fb += `${sess.content || '详见课堂笔记'}\n`;
+    }
+    fb += '\n';
+
+    if (sess.homework) {
+      fb += `📝 作业安排\n`;
+      fb += `${sess.homework}\n`;
+      fb += `请家长协助提醒孩子按时完成，有任何疑问欢迎随时沟通。\n\n`;
+    }
+
+    if (sess.notes) {
+      fb += `💬 课堂表现\n`;
+      fb += `${sess.notes}\n\n`;
+    }
+
+    // Improvement direction based on weak modules
+    if (weakMods.length > 0) {
+      fb += `🎯 后续教学计划\n`;
+      fb += `接下来我们会重点关注以下模块的巩固提升：\n`;
+      weakMods.slice(0, 3).forEach(m => { fb += `· ${m}\n`; });
+      fb += `请家长鼓励孩子在家也多关注这些内容，有疑问随时联系我。\n\n`;
+    }
+
+    // Add exam score context if available
+    if (s.exams && s.exams.length > 0) {
+      const latest = s.exams[0]; // Already sorted desc
+      const pct = (latest.score / latest.fullScore * 100).toFixed(1);
+      fb += `📊 成绩参考\n`;
+      fb += `最近一次考试（${latest.name}）得分率 ${pct}%`;
+      if (s.exams.length >= 2) {
+        const prev = s.exams[1];
+        const prevPct = (prev.score / prev.fullScore * 100).toFixed(1);
+        const diff = (parseFloat(pct) - parseFloat(prevPct)).toFixed(1);
+        if (diff > 0) fb += `，较上次提升 ${diff} 个百分点`;
+        else if (diff < 0) fb += `，较上次下降 ${Math.abs(diff)} 个百分点`;
+      }
+      fb += '。\n\n';
+    }
+
+    fb += `💪 老师寄语\n`;
+    fb += `${encourage}\n`;
+    fb += `${s.name}在这节课的表现整体不错，`;
+    if (strongMods.length > 0) {
+      fb += `在${strongMods[0]}方面已经有了很好的基础。`;
+    } else {
+      fb += `学习态度端正，值得肯定。`;
+    }
+    fb += `只要保持学习的节奏，相信一定会有更大的进步！\n\n`;
+    fb += `如有任何问题，欢迎随时与我沟通交流，我们一起帮助${s.name}取得更好的成绩！`;
+  }
+
+  document.getElementById('feedbackContent').textContent = fb;
+}
+
+function copyFeedback() {
+  const el = document.getElementById('feedbackContent');
+  if (el) {
+    navigator.clipboard.writeText(el.textContent).then(() => {
+      // Mark feedback as sent
+      const s = getStudent(selectedStudentId);
+      if (s) {
+        const idx = parseInt(document.getElementById('feedbackSessionSelect').value);
+        if (s.sessions[idx]) {
+          s.sessions[idx].feedbackSent = true;
+          saveData(appData);
+        }
+      }
+      alert('课后反馈已复制到剪贴板');
+    });
+  }
+}
+
+function openFeedbackForSession(sid) {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  const idx = s.sessions.findIndex(x => x.id === sid);
+  if (idx < 0) return;
+  openFeedback();
+  document.getElementById('feedbackSessionSelect').value = idx;
+  generateFeedback();
+}
+
+// ============ EXAMS / GRADES ============
+function openAddExam() {
+  document.getElementById('examModalTitle').textContent = '添加考试';
+  document.getElementById('editExamId').value = '';
+  document.getElementById('eName').value = '';
+  document.getElementById('eType').value = '月考';
+  document.getElementById('eDate').value = todayStr();
+  document.getElementById('eScore').value = '';
+  document.getElementById('eFullScore').value = 150;
+  document.getElementById('eRank').value = '';
+  document.getElementById('eNotes').value = '';
+  openModal('examModal');
+}
+
+function openEditExam(eid) {
+  const s = getStudent(selectedStudentId);
+  const e = s.exams.find(x => x.id === eid);
+  if (!e) return;
+  document.getElementById('examModalTitle').textContent = '编辑考试';
+  document.getElementById('editExamId').value = eid;
+  document.getElementById('eName').value = e.name || '';
+  document.getElementById('eType').value = e.type || '月考';
+  document.getElementById('eDate').value = e.date || '';
+  document.getElementById('eScore').value = e.score;
+  document.getElementById('eFullScore').value = e.fullScore || 150;
+  document.getElementById('eRank').value = e.rank || '';
+  document.getElementById('eNotes').value = e.notes || '';
+  openModal('examModal');
+}
+
+function saveExam() {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  const name = document.getElementById('eName').value.trim();
+  const score = parseFloat(document.getElementById('eScore').value);
+  if (!name || isNaN(score)) { alert('请填写考试名称和分数'); return; }
+  const editId = document.getElementById('editExamId').value;
+  const examData = {
+    name, type: document.getElementById('eType').value,
+    date: document.getElementById('eDate').value, score,
+    fullScore: parseFloat(document.getElementById('eFullScore').value) || 150,
+    rank: document.getElementById('eRank').value.trim(),
+    notes: document.getElementById('eNotes').value.trim()
+  };
+  if (editId) {
+    const idx = s.exams.findIndex(x => x.id === editId);
+    if (idx >= 0) Object.assign(s.exams[idx], examData);
+  } else {
+    s.exams.push({ id: genId(), ...examData });
+  }
+  s.exams.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  saveData(appData);
+  closeModal('examModal');
+  renderPage();
+}
+
+function deleteExam(eid) {
+  if (!confirm('确定删除此考试记录？')) return;
+  const s = getStudent(selectedStudentId);
+  s.exams = s.exams.filter(x => x.id !== eid);
+  saveData(appData);
+  renderPage();
+}
+
+let gradeChart = null;
+let radarChart = null;
+
+function renderGrades(container) {
+  const s = getStudent(selectedStudentId);
+  if (!s) { renderStudentPicker(container, currentPage); return; }
+
+  // Module mastery section
+  const allMods = [...DEFAULT_MODULES, ...(s.customModules||[])];
+  const modEntries = allMods.map(m => ({ name: m, level: (s.modules||{})[m] || 0 }));
+
+  let html = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <h3>📐 知识模块掌握度</h3>
+        <button class="btn btn-sm btn-primary" onclick="saveModuleMastery()">保存掌握度</button>
+      </div>
+      <div class="card-body">
+        <div class="module-grid" id="moduleGrid">
+          ${modEntries.map(m => `<div class="module-item">
+            <span class="mod-name">${m.name}</span>
+            <select data-module="${m.name}">
+              <option value="0" ${m.level===0?'selected':''}>未接触</option>
+              <option value="1" ${m.level===1?'selected':''}>了解</option>
+              <option value="2" ${m.level===2?'selected':''}>理解</option>
+              <option value="3" ${m.level===3?'selected':''}>掌握</option>
+              <option value="4" ${m.level===4?'selected':''}>精通</option>
+            </select>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card">
+        <div class="card-header"><h3>📈 成绩趋势</h3></div>
+        <div class="card-body"><div class="chart-container"><canvas id="gradeChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>🎯 模块雷达图</h3></div>
+        <div class="card-body"><div class="chart-container"><canvas id="radarChart"></canvas></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3>📊 考试记录</h3>
+        <button class="btn btn-primary btn-sm" onclick="openAddExam()">+ 添加考试</button>
+      </div>
+      <div class="card-body">
+  `;
+  if (s.exams.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">📈</div><p>还没有考试记录</p></div>';
+  } else {
+    html += '<div class="table-wrap"><table><tr><th>考试</th><th>类型</th><th>日期</th><th>得分</th><th>满分</th><th>得分率</th><th>排名</th><th>操作</th></tr>';
+    s.exams.forEach(e => {
+      const pct = ((e.score / e.fullScore) * 100).toFixed(1);
+      const pctColor = pct >= 85 ? 'var(--success)' : pct >= 60 ? 'var(--warning)' : 'var(--danger)';
+      html += `<tr>
+        <td>${escapeHtml(e.name)}</td>
+        <td><span class="tag tag-grade">${e.type}</span></td>
+        <td>${e.date||'-'}</td>
+        <td><strong>${e.score}</strong></td>
+        <td>${e.fullScore}</td>
+        <td><span style="color:${pctColor};font-weight:600">${pct}%</span></td>
+        <td>${e.rank||'-'}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="openEditExam('${e.id}')">编辑</button>
+          <button class="btn btn-sm btn-outline" style="color:var(--danger)" onclick="deleteExam('${e.id}')">删除</button>
+        </td>
+      </tr>`;
+    });
+    html += '</table></div>';
+  }
+  html += '</div></div>';
+  container.innerHTML = html;
+
+  // Render charts after DOM is ready
+  setTimeout(() => {
+    // Grade trend chart
+    const gradeCtx = document.getElementById('gradeChart');
+    if (gradeCtx && s.exams.length > 0) {
+      if (gradeChart) gradeChart.destroy();
+      const sorted = [...s.exams].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+      gradeChart = new Chart(gradeCtx, {
+        type: 'line',
+        data: {
+          labels: sorted.map(e => e.name),
+          datasets: [{
+            label: '得分率 %',
+            data: sorted.map(e => (e.score/e.fullScore*100).toFixed(1)),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointBackgroundColor: '#6366f1',
+            pointRadius: 5
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v+'%' } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Radar chart
+    const radarCtx = document.getElementById('radarChart');
+    if (radarCtx) {
+      if (radarChart) radarChart.destroy();
+      const top8 = modEntries.filter(m => m.level > 0).slice(0, 8);
+      if (top8.length >= 3) {
+        radarChart = new Chart(radarCtx, {
+          type: 'radar',
+          data: {
+            labels: top8.map(m => m.name),
+            datasets: [{
+              label: '掌握度',
+              data: top8.map(m => m.level),
+              backgroundColor: 'rgba(99,102,241,0.2)',
+              borderColor: '#6366f1',
+              pointBackgroundColor: '#6366f1'
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { r: { min: 0, max: 4, ticks: { stepSize: 1, callback: v => ['','了解','理解','掌握','精通'][v]||'' } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+    }
+  }, 50);
+}
+
+function saveModuleMastery() {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  document.querySelectorAll('#moduleGrid select').forEach(sel => {
+    s.modules[sel.dataset.module] = parseInt(sel.value);
+  });
+  saveData(appData);
+  renderPage();
+  alert('掌握度已保存');
+}
+
+// ============ REPORT ============
+function renderReportPage(container) {
+  const s = getStudent(selectedStudentId);
+  if (!s) { renderStudentPicker(container, currentPage); return; }
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header"><h3>📋 家长学习报告</h3></div>
+      <div class="card-body">
+        <p style="color:var(--text-light);margin-bottom:16px">选择报告周期后，系统会自动生成一份结构化的学习报告，可直接复制发给家长。</p>
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group"><label>报告周期</label>
+            <select class="form-select" id="reportPeriodPage">
+              <option value="month">最近一个月</option>
+              <option value="quarter">最近三个月</option>
+              <option value="semester">本学期</option>
+              <option value="all">全部</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;gap:10px">
+            <button class="btn btn-primary" onclick="generateAndShowReport()">生成报告</button>
+          </div>
+        </div>
+        <div id="reportPreviewArea"></div>
+      </div>
+    </div>
+  `;
+}
+
+function generateAndShowReport() {
+  const period = document.getElementById('reportPeriodPage').value;
+  const text = buildReport(period);
+  document.getElementById('reportPreviewArea').innerHTML = `
+    <div class="report-preview" id="reportText">${escapeHtml(text)}</div>
+    <div style="margin-top:12px;text-align:right">
+      <button class="btn btn-primary" onclick="copyReportText()">📋 复制报告</button>
+    </div>
+  `;
+}
+
+function buildReport(period) {
+  const s = getStudent(selectedStudentId);
+  if (!s) return '';
+  const now = new Date();
+  let startDate;
+  if (period === 'month') { startDate = new Date(now); startDate.setMonth(startDate.getMonth()-1); }
+  else if (period === 'quarter') { startDate = new Date(now); startDate.setMonth(startDate.getMonth()-3); }
+  else if (period === 'semester') { startDate = new Date(now.getFullYear(), now.getMonth() < 7 ? 0 : 6, 1); }
+  else { startDate = new Date(2020,0,1); }
+  const startStr = startDate.toISOString().slice(0,10);
+
+  const sessions = s.sessions.filter(sess => sess.date >= startStr);
+  const exams = s.exams.filter(e => e.date >= startStr);
+  const totalHours = sessions.reduce((a,b) => a + (b.duration||0), 0);
+
+  // Session type breakdown
+  const typeBreakdown = {};
+  sessions.forEach(sess => {
+    const type = sess.type || 'knowledge';
+    const info = SESSION_TYPES[type] || SESSION_TYPES.knowledge;
+    typeBreakdown[info.label] = (typeBreakdown[info.label] || 0) + 1;
+  });
+
+  // Calculate trend
+  let trend = '持平';
+  let trendDetail = '';
+  if (exams.length >= 2) {
+    const sorted = [...exams].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    const first = sorted[0].score / sorted[0].fullScore * 100;
+    const last = sorted[sorted.length-1].score / sorted[sorted.length-1].fullScore * 100;
+    const diff = (last - first).toFixed(1);
+    if (last - first > 5) { trend = '明显进步'; trendDetail = `得分率从 ${first.toFixed(1)}% 提升至 ${last.toFixed(1)}%，提升 ${diff} 个百分点`; }
+    else if (last - first > 0) { trend = '稳步提升'; trendDetail = `得分率从 ${first.toFixed(1)}% 提升至 ${last.toFixed(1)}%`; }
+    else if (last - first < -5) { trend = '有所下滑'; trendDetail = `得分率从 ${first.toFixed(1)}% 下降至 ${last.toFixed(1)}%，需要关注`; }
+    else { trend = '基本持平'; trendDetail = `得分率维持在 ${last.toFixed(1)}% 左右`; }
+  }
+
+  // Weak modules
+  const weakMods = Object.entries(s.modules||{}).filter(([k,v]) => v <= 1 && v > 0).map(([k]) => k);
+  const strongMods = Object.entries(s.modules||{}).filter(([k,v]) => v >= 3).map(([k]) => k);
+
+  let report = `📊 学习报告 — ${s.name}\n`;
+  report += `${'━'.repeat(30)}\n\n`;
+  report += `👤 学生信息\n`;
+  report += `姓名：${s.name}  年级：${s.grade}\n`;
+  report += `报告周期：${period === 'month' ? '最近一个月' : period === 'quarter' ? '最近三个月' : period === 'semester' ? '本学期' : '全部'}\n\n`;
+
+  report += `📚 课程概况\n`;
+  report += `上课次数：${sessions.length} 次\n`;
+  report += `累计课时：${totalHours} 小时\n`;
+  if (Object.keys(typeBreakdown).length > 0) {
+    report += `课程构成：${Object.entries(typeBreakdown).map(([k,v]) => `${k} ${v}次`).join('、')}\n`;
+  }
+  report += '\n';
+
+  if (exams.length > 0) {
+    report += `📈 考试成绩\n`;
+    exams.forEach(e => {
+      const pct = (e.score / e.fullScore * 100).toFixed(1);
+      report += `· ${e.name}（${e.date}）：${e.score}/${e.fullScore}，得分率 ${pct}%`;
+      if (e.rank) report += `，排名 ${e.rank}`;
+      report += '\n';
+    });
+    report += `\n成绩趋势：${trend}`;
+    if (trendDetail) report += `\n${trendDetail}`;
+    report += '\n\n';
+  }
+
+  if (strongMods.length > 0) {
+    report += `✅ 掌握较好的模块\n`;
+    strongMods.forEach(m => { report += `· ${m}\n`; });
+    report += '\n';
+  }
+  if (weakMods.length > 0) {
+    report += `⚠️ 需要加强的模块\n`;
+    weakMods.forEach(m => { report += `· ${m}\n`; });
+    report += '\n';
+  }
+
+  // Recent content
+  if (sessions.length > 0) {
+    report += `📝 近期教学内容\n`;
+    sessions.slice(0,5).forEach(sess => {
+      const typeInfo = SESSION_TYPES[sess.type] || SESSION_TYPES.knowledge;
+      report += `· ${sess.date} [${typeInfo.label}]：${(sess.content||'').slice(0,50)}\n`;
+    });
+    report += '\n';
+  }
+
+  // Next steps
+  report += `🎯 后续教学计划\n`;
+  if (weakMods.length > 0) {
+    report += `1. 重点巩固以下薄弱模块：${weakMods.slice(0,3).join('、')}\n`;
+    report += `2. 针对性练习，强化解题能力\n`;
+  }
+  if (s.grade === '高三') {
+    report += `${weakMods.length > 0 ? '3' : '1'}. 持续进行高考模拟训练，提升应试能力\n`;
+  }
+  report += '\n';
+
+  // Open issues (internal only, not shown to parents)
+  const openIssues = (s.issues||[]).filter(i => i.status === 'open');
+  if (openIssues.length > 0) {
+    report += `🔍 待跟进事项（内部记录）\n`;
+    openIssues.forEach(i => { report += `· ${i.description}\n`; });
+    report += '\n';
+  }
+
+  report += `${'━'.repeat(30)}\n`;
+  report += `以上报告由数学家教系统生成\n`;
+  report += `如有疑问请随时沟通，感谢您的信任与配合！`;
+
+  return report;
+}
+
+function copyReportText() {
+  const el = document.getElementById('reportText');
+  if (el) {
+    navigator.clipboard.writeText(el.textContent).then(() => alert('报告已复制到剪贴板'));
+  }
+}
+
+// ============ SUGGESTIONS ============
+function renderSuggest(container) {
+  const s = getStudent(selectedStudentId);
+  if (!s) { renderStudentPicker(container, currentPage); return; }
+
+  const suggestions = [];
+
+  // Find weak modules (only "了解" level = need reinforcement, skip "未接触")
+  const weakMods = Object.entries(s.modules||{}).filter(([k,v]) => v === 1).map(([k]) => k);
+  const untouchedMods = Object.entries(s.modules||{}).filter(([k,v]) => v === 0).map(([k]) => k);
+  if (weakMods.length > 0) {
+    suggestions.push({
+      icon: '⚠️',
+      title: '薄弱模块需要巩固',
+      desc: `以下模块处于「了解」级别，建议优先安排复习巩固：\n${weakMods.map(m => '· ' + m).join('\n')}`,
+      priority: 'high'
+    });
+  }
+  if (untouchedMods.length > 0 && untouchedMods.length < Object.keys(s.modules||{}).length) {
+    suggestions.push({
+      icon: '📋',
+      title: '尚未接触的模块',
+      desc: `以下模块暂未接触，不急于排课，待当前薄弱模块巩固后再逐步引入：\n${untouchedMods.slice(0,6).map(m => '· ' + m).join('\n')}${untouchedMods.length>6 ? '\n· ...' : ''}`,
+      priority: ''
+    });
+  }
+
+  // Recent exam analysis
+  if (s.exams.length >= 2) {
+    const sorted = [...s.exams].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    const recent = sorted.slice(-3);
+    const avgPct = recent.reduce((a,e) => a + e.score/e.fullScore*100, 0) / recent.length;
+    if (avgPct < 60) {
+      suggestions.push({
+        icon: '📉',
+        title: '近期成绩偏低',
+        desc: `最近${recent.length}次考试平均得分率 ${avgPct.toFixed(1)}%，建议加强基础训练，适当降低难度，建立信心。`,
+        priority: 'high'
+      });
+    } else if (avgPct < 80) {
+      suggestions.push({
+        icon: '📊',
+        title: '成绩有提升空间',
+        desc: `平均得分率 ${avgPct.toFixed(1)}%，处于中等水平。建议针对错题进行专项训练，突破瓶颈。`,
+        priority: 'medium'
+      });
+    }
+  }
+
+  // Session frequency
+  const recent30 = s.sessions.filter(sess => {
+    const d = new Date(); d.setDate(d.getDate()-30);
+    return sess.date >= d.toISOString().slice(0,10);
+  });
+  if (recent30.length < 4 && s.sessions.length > 0) {
+    suggestions.push({
+      icon: '📅',
+      title: '上课频率偏低',
+      desc: '最近30天上课次数不足4次，建议保持稳定的上课节奏，避免知识遗忘。',
+      priority: 'medium'
+    });
+  }
+
+  // Unresolved issues
+  const openIssues = (s.issues||[]).filter(i => i.status === 'open');
+  if (openIssues.length > 0) {
+    suggestions.push({
+      icon: '🔍',
+      title: '有待解决的学习问题',
+      desc: `有 ${openIssues.length} 个学习问题待解决：\n${openIssues.slice(0,3).map(i => '· '+i.description).join('\n')}`,
+      priority: 'medium'
+    });
+  }
+
+  // Grade-specific suggestions
+  if (s.grade === '高三') {
+    suggestions.push({
+      icon: '🎓',
+      title: '高考备考建议',
+      desc: '高三学生建议：1）每周至少一次模拟练习；2）重点突破薄弱模块；3）建立错题本；4）合理分配各模块复习时间。',
+      priority: 'high'
+    });
+  }
+
+  // Default suggestion if nothing else
+  if (suggestions.length === 0) {
+    suggestions.push({
+      icon: '✅',
+      title: '状态良好',
+      desc: '当前学生学习状态良好，继续保持！建议定期检查各模块掌握度，确保没有遗漏。',
+      priority: ''
+    });
+  }
+
+  let html = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>🎯 智能排课建议 - ${escapeHtml(s.name)}</h3></div>
+      <div class="card-body">
+        ${suggestions.map(sg => `<div class="suggestion-card">
+          <div class="suggestion-icon">${sg.icon}</div>
+          <div>
+            <div class="suggestion-title">${sg.title}${sg.priority ? `<span class="suggestion-priority priority-${sg.priority}">${sg.priority==='high'?'重要':'建议'}</span>` : ''}</div>
+            <div class="suggestion-desc">${escapeHtml(sg.desc)}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3>🔍 学习问题追踪</h3>
+        <button class="btn btn-sm btn-primary" onclick="openModal('issueModal')">+ 记录问题</button>
+      </div>
+      <div class="card-body">
+        ${(s.issues||[]).length === 0 ? '<div class="empty-state" style="padding:20px">暂无学习问题记录</div>' :
+          (s.issues||[]).map(iss => `<div class="issue-item">
+            <div class="issue-status ${iss.status==='resolved'?'resolved':''}" onclick="toggleIssue('${iss.id}')">${iss.status==='resolved'?'✓':''}</div>
+            <div class="issue-text ${iss.status==='resolved'?'resolved':''}">${escapeHtml(iss.description)}</div>
+            <div class="issue-date">${iss.createdAt ? new Date(iss.createdAt).toLocaleDateString() : ''}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+  container.innerHTML = html;
+}
+
+function saveIssue() {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  const text = document.getElementById('issueText').value.trim();
+  if (!text) { alert('请输入问题描述'); return; }
+  if (!s.issues) s.issues = [];
+  s.issues.push({ id: genId(), description: text, status: 'open', createdAt: Date.now() });
+  saveData(appData);
+  document.getElementById('issueText').value = '';
+  closeModal('issueModal');
+  renderPage();
+}
+
+function toggleIssue(iid) {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  const iss = (s.issues||[]).find(i => i.id === iid);
+  if (iss) {
+    iss.status = iss.status === 'open' ? 'resolved' : 'open';
+    if (iss.status === 'resolved') iss.resolvedAt = Date.now();
+    saveData(appData);
+    renderPage();
+  }
+}
+
+// ============ SEARCH ============
+function globalSearchFn(query) {
+  if (currentPage !== 'students') switchPage('students');
+  const cards = document.querySelectorAll('.student-card-item');
+  const q = query.toLowerCase();
+  cards.forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+
+// ============ IMPORT/EXPORT ============
+function exportData() {
+  const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tutor-data-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.students && Array.isArray(imported.students)) {
+        if (confirm(`确定导入数据？将覆盖当前 ${appData.students.length} 位学生数据。`)) {
+          appData = imported;
+          saveData(appData);
+          renderPage();
+          alert('数据导入成功！');
+        }
+      } else {
+        alert('文件格式不正确');
+      }
+    } catch(err) {
+      alert('文件解析失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ============ INIT ============
+async function doInit() {
+  appData = await initStorage();
+
+  // 读取到空数据或无效数据，视为失败
+  if (appData && (!appData.students || !Array.isArray(appData.students))) {
+    appData = null;
+  }
+
+  if (appData !== null) {
+    lastLoadTime = new Date();
+  }
+
+  if (appData === null) {
+    // 首次使用或文件句柄丢失，显示设置界面
+    let oldData = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.students && parsed.students.length > 0) oldData = parsed;
+      }
+    } catch {}
+
+    const c = document.getElementById('pageContent');
+    const hadHandle = dataFileHandle !== null || dataFileName !== '';
+    c.innerHTML = `
+      <div style="max-width:500px;margin:60px auto;text-align:center">
+        <div style="font-size:3em;margin-bottom:16px">📐</div>
+        <h2 style="margin-bottom:8px">${hadHandle ? '数据文件关联已失效' : '欢迎使用数学家教管理系统'}</h2>
+        <p style="color:var(--text-light);margin-bottom:30px">${hadHandle ? '请重新选择数据文件（坚果云同步文件夹中的 json 文件）' : '首次使用，请选择数据文件的保存位置<br>建议保存到坚果云同步文件夹，实现多设备同步'}</p>
+        ${oldData ? `
+        <div style="background:var(--warning-bg);border:1px solid var(--warning);border-radius:var(--radius);padding:16px;margin-bottom:20px;text-align:left">
+          <strong>⚠️ 发现旧数据</strong>：浏览器中有 ${oldData.students.length} 位学生的数据<br>
+          <span style="font-size:0.85em;color:var(--text-light)">点击下方「恢复旧数据」可将其保存到新文件中</span>
+        </div>
+        ` : ''}
+        <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+          <button class="btn btn-primary" style="padding:12px 32px;font-size:1em;width:280px" onclick="setupOpenFile()">
+            📂 打开数据文件（推荐）
+          </button>
+          <button class="btn btn-outline" style="padding:12px 32px;font-size:1em;width:280px" onclick="setupCreateFile(${oldData ? 'true' : 'false'})">
+            📄 创建新数据文件
+          </button>
+          ${oldData ? `
+          <button class="btn btn-outline" style="padding:12px 32px;font-size:1em;width:280px;color:var(--warning);border-color:var(--warning)" onclick="setupRecoverOld()">
+            🔄 恢复旧数据到新文件
+          </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  updateFileStatus();
+  renderPage();
+}
+
+async function setupCreateFile(hasOld) {
+  const data = await createDataFile();
+  if (data) {
+    if (hasOld) {
+      // 创建了文件，但不自动导入旧数据，让用户选择
+    }
+    appData = data;
+    lastLoadTime = new Date();
+    updateFileStatus();
+    renderPage();
+  }
+}
+
+async function setupOpenFile() {
+  if (await selectDataFile()) {
+    const data = await readFile(dataFileHandle);
+    if (data && data.students) {
+      appData = data;
+      lastLoadTime = new Date();
+    } else {
+      alert('文件格式不正确');
+      appData = { students: [], settings: { customModules: [] } };
+    }
+    updateFileStatus();
+    renderPage();
+  }
+}
+
+async function setupRecoverOld() {
+  // 先创建文件
+  const fileData = await createDataFile();
+  if (!fileData) return;
+  // 读取旧数据
+  let oldData = null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.students && parsed.students.length > 0) oldData = parsed;
+    }
+  } catch {}
+  if (oldData) {
+    appData = oldData;
+    await saveData(appData);
+    alert(`已恢复 ${oldData.students.length} 位学生的数据！`);
+  } else {
+    appData = fileData;
+  }
+  lastLoadTime = new Date();
+  updateFileStatus();
+  renderPage();
+}
+
+doInit();
+</script>
+</body>
+</html>

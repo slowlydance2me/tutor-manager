@@ -3045,6 +3045,7 @@ function parseMeetingSummary(text) {
   const summaryMatch = text.match(/会议摘要[：:]\s*([\s\S]*?)(?=\n[-—]{2,}|\n[一二三四五六七八九十]+[、.])/);
   if (summaryMatch) {
     summary = summaryMatch[1].trim()
+      .replace(/[一-龥]老师/g, '')
       .replace(/本次课程/g, '这节课')
       .replace(/进行了详细/g, '详细')
       .replace(/讲解了/g, '讲了')
@@ -3084,19 +3085,22 @@ function parseMeetingSummary(text) {
     if (hwKw.test(t)) homeworkLines.push(t);
   }
 
+  // 统一清理教师姓名
+  const cleanTeacher = s => s.replace(/[一-龥]老师/g, '');
+
   // 组装教学内容
   let contentParts = [];
   if (summary) {
-    contentParts.push(summary);
+    contentParts.push(cleanTeacher(summary));
   } else if (sectionHeaders.length > 0) {
     const cleanHeaders = sectionHeaders.map(h =>
-      h.replace(/的核心概念|的判定与解题策略|与实战演练|的综合题|与.*?的.*$/g, '')
+      cleanTeacher(h.replace(/的核心概念|的判定与解题策略|与实战演练|的综合题|与.*?的.*$/g, ''))
     );
     contentParts.push(`主要讲了${cleanHeaders.join('和')}。`);
   }
   if (keyPoints.length > 0) {
     contentParts.push('\n重点带孩子过了以下内容：');
-    keyPoints.slice(0, 8).forEach(p => { contentParts.push(`- ${p}`); });
+    keyPoints.slice(0, 8).forEach(p => { contentParts.push(`- ${cleanTeacher(p)}`); });
   }
 
   return {
@@ -3279,8 +3283,17 @@ function generateFeedback() {
 
   // Psychology sessions get a different template
   if (sess.type === 'psychology') {
-    fb += `家长您好！跟您说一下${s.name}这节课的沟通情况。\n\n`;
-    fb += `今天主要跟${s.name}聊了聊，围绕以下方面：\n`;
+    let psyTimeStr = `${sess.duration || 1}小时心理疏导`;
+    if (sess.scheduledTime) {
+      const [h, m] = sess.scheduledTime.split(':').map(Number);
+      const endH = h + Math.floor((sess.duration || 1));
+      const endM = m + (((sess.duration || 1) % 1) * 60);
+      const endHr = endH + Math.floor(endM / 60);
+      const endMin = Math.round(endM % 60);
+      psyTimeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}-${String(endHr).padStart(2,'0')}:${String(endMin).padStart(2,'0')}  心理疏导`;
+    }
+    fb += `${sess.date || todayStr()}  ${psyTimeStr}\n\n`;
+    fb += `主要跟${s.name}聊了聊，围绕以下方面：\n`;
     contentLines.forEach(line => { fb += `${line}\n`; });
     fb += '\n';
     if (sess.notes) {
@@ -3304,14 +3317,20 @@ function generateFeedback() {
 
     const mainLines = mainContent.split('\n').filter(l => l.trim());
 
-    fb += `家长您好！跟您说一下${s.name}${sess.date || todayStr()}这节课的情况。\n\n`;
+    // 计算上课时间段
+    let timeStr = `${sess.duration || 1}小时${typeInfo.label}`;
+    if (sess.scheduledTime) {
+      const [h, m] = sess.scheduledTime.split(':').map(Number);
+      const endH = h + Math.floor((sess.duration || 1));
+      const endM = m + (((sess.duration || 1) % 1) * 60);
+      const endHr = endH + Math.floor(endM / 60);
+      const endMin = Math.round(endM % 60);
+      timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}-${String(endHr).padStart(2,'0')}:${String(endMin).padStart(2,'0')}  ${typeInfo.label}`;
+    }
 
-    fb += `今天上了${sess.duration || 1}小时的${typeInfo.label}，`;
+    fb += `${sess.date || todayStr()}  ${timeStr}\n\n`;
     if (mainLines.length > 0) {
-      fb += `主要内容是：\n`;
       mainLines.forEach(line => { fb += `${line}\n`; });
-    } else {
-      fb += `具体内容可以看课堂笔记。\n`;
     }
     fb += '\n';
 

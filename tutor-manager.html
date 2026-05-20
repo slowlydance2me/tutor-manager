@@ -8,28 +8,29 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 :root {
-  --primary: #4f46e5;
-  --primary-light: #6366f1;
-  --primary-bg: rgba(79,70,229,0.1);
-  --success: #10b981;
-  --success-bg: rgba(16,185,129,0.1);
-  --warning: #f59e0b;
-  --warning-bg: rgba(245,158,11,0.1);
-  --danger: #ef4444;
-  --danger-bg: rgba(239,68,68,0.1);
-  --info: #06b6d4;
-  --bg: #f8fafc;
-  --bg-sidebar: #1e293b;
+  --primary: #059669;
+  --primary-light: #10b981;
+  --primary-bg: rgba(16,185,129,0.08);
+  --success: #34d399;
+  --success-bg: rgba(52,211,153,0.08);
+  --warning: #fbbf24;
+  --warning-bg: rgba(251,191,36,0.08);
+  --danger: #f87171;
+  --danger-bg: rgba(248,113,113,0.08);
+  --info: #22d3ee;
+  --bg: #f0f7f4;
+  --bg-sidebar: #1a3a2a;
+  --bg-sidebar-solid: #1a3a2a;
   --bg-card: #ffffff;
-  --bg-input: #f1f5f9;
-  --text: #1e293b;
-  --text-light: #64748b;
-  --text-sidebar: #94a3b8;
+  --bg-input: #f0fdf9;
+  --text: #1e3a34;
+  --text-light: #6b8f80;
+  --text-sidebar: rgba(255,255,255,0.65);
   --text-sidebar-active: #ffffff;
-  --border: #e2e8f0;
-  --shadow: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
-  --radius: 10px;
+  --border: #d1e8e0;
+  --shadow: 0 2px 8px rgba(5,150,105,0.06);
+  --shadow-lg: 0 8px 24px rgba(5,150,105,0.1);
+  --radius: 14px;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -38,6 +39,8 @@ body {
   color: var(--text);
   height: 100vh;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 a { text-decoration: none; color: inherit; }
 
@@ -50,10 +53,11 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  box-shadow: 4px 0 16px rgba(0,0,0,0.08);
 }
 .sidebar-header {
   padding: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
 }
 .sidebar-header h1 {
   font-size: 1.1em;
@@ -61,6 +65,8 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 .sidebar-header .sub { font-size: 0.75em; color: var(--text-sidebar); margin-top: 4px; }
 .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
@@ -74,11 +80,11 @@ a { text-decoration: none; color: inherit; }
   font-size: 0.9em;
   border-left: 3px solid transparent;
 }
-.nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .nav-item.active {
-  background: rgba(255,255,255,0.08);
+  background: rgba(16,185,129,0.15);
   color: #fff;
-  border-left-color: var(--primary-light);
+  border-left-color: #34d399;
 }
 .nav-item .nav-icon { font-size: 1.1em; width: 24px; text-align: center; }
 .nav-section-title {
@@ -90,7 +96,7 @@ a { text-decoration: none; color: inherit; }
 }
 .sidebar-footer {
   padding: 16px 20px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.12);
   font-size: 0.75em;
 }
 .sidebar-footer a { color: var(--primary-light); cursor: pointer; }
@@ -107,7 +113,9 @@ a { text-decoration: none; color: inherit; }
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: var(--bg-card);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -121,13 +129,14 @@ a { text-decoration: none; color: inherit; }
   padding: 8px 12px 8px 32px;
   background: var(--bg-input);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.85em;
   width: 220px;
   outline: none;
   color: var(--text);
+  transition: all 0.2s;
 }
-.search-box input:focus { border-color: var(--primary-light); }
+.search-box input:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
 .search-box::before {
   content: '🔍';
   position: absolute;
@@ -140,14 +149,20 @@ a { text-decoration: none; color: inherit; }
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  background: linear-gradient(135deg, #f0f7f4 0%, #e2f0ea 100%);
 }
 
 /* Cards & Components */
 .card {
   background: var(--bg-card);
   border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.8);
   box-shadow: var(--shadow);
+  transition: box-shadow 0.3s, transform 0.2s;
+}
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
 }
 .card-header {
   padding: 16px 20px;
@@ -168,10 +183,15 @@ a { text-decoration: none; color: inherit; }
 }
 .stat-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.8);
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow);
+  transition: box-shadow 0.3s, transform 0.2s;
+}
+.stat-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 .stat-card .stat-icon {
   font-size: 1.5em;
@@ -191,7 +211,7 @@ a { text-decoration: none; color: inherit; }
 /* Buttons */
 .btn {
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
   font-size: 0.85em;
   cursor: pointer;
@@ -201,8 +221,16 @@ a { text-decoration: none; color: inherit; }
   transition: all 0.2s;
   font-weight: 500;
 }
-.btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-light); }
+.btn-primary {
+  background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+  color: #fff;
+  border: none;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5,150,105,0.3);
+}
 .btn-success { background: var(--success); color: #fff; }
 .btn-success:hover { opacity: 0.9; }
 .btn-warning { background: var(--warning); color: #fff; }
@@ -211,8 +239,9 @@ a { text-decoration: none; color: inherit; }
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-light);
+  border-radius: 10px;
 }
-.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-outline:hover { border-color: var(--primary-light); color: var(--primary); background: var(--primary-bg); }
 .btn-sm { padding: 5px 10px; font-size: 0.8em; }
 .btn-icon {
   width: 32px;
@@ -251,6 +280,7 @@ a { text-decoration: none; color: inherit; }
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
 }
 .form-textarea { resize: vertical; min-height: 80px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -271,7 +301,7 @@ th {
   background: var(--bg-input);
   white-space: nowrap;
 }
-tr:hover { background: rgba(99,102,241,0.03); }
+tr:hover { background: rgba(16,185,129,0.04); }
 
 /* Tags */
 .tag {
@@ -309,14 +339,16 @@ tr:hover { background: rgba(99,102,241,0.03); }
   gap: 14px;
   padding: 14px 16px;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,0.8);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: var(--shadow);
 }
 .student-card-item:hover {
   border-color: var(--primary-light);
   box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
 }
 .student-avatar {
   width: 44px;
@@ -360,6 +392,8 @@ tr:hover { background: rgba(99,102,241,0.03); }
   color: var(--primary);
   border-bottom-color: var(--primary);
   font-weight: 600;
+  background: var(--primary-bg);
+  border-radius: 8px 8px 0 0;
 }
 
 /* Charts */
@@ -374,7 +408,9 @@ tr:hover { background: rgba(99,102,241,0.03); }
   display: none;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(5,150,105,0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 1000;
   align-items: center;
   justify-content: center;
@@ -382,17 +418,17 @@ tr:hover { background: rgba(99,102,241,0.03); }
 .modal-overlay.show { display: flex; }
 .modal {
   background: var(--bg-card);
-  border-radius: 14px;
+  border-radius: 20px;
   width: 90%;
   max-width: 600px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-  animation: modalIn 0.25s ease;
+  box-shadow: 0 20px 60px rgba(5,150,105,0.12);
+  animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes modalIn {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translateY(24px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 .modal-header {
   padding: 18px 24px;
@@ -423,28 +459,16 @@ tr:hover { background: rgba(99,102,241,0.03); }
 /* Quick Tags */
 .quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .quick-tag {
-  padding: 4px 10px;
+  padding: 4px 12px;
   background: var(--bg-input);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   font-size: 0.78em;
   cursor: pointer;
   transition: all 0.2s;
   color: var(--text-light);
 }
-.quick-tag:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
-.template-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.template-btn {
-  padding: 6px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.8em;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: var(--text-light);
-}
-.template-btn:hover { border-color: var(--primary); color: var(--primary); }
+.quick-tag:hover { border-color: var(--primary-light); color: var(--primary); background: var(--primary-bg); transform: translateY(-1px); }
 .student-switcher {
   padding: 6px 12px;
   background: var(--primary-bg);
@@ -586,7 +610,7 @@ tr:hover { background: rgba(99,102,241,0.03); }
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--bg-sidebar);
+  background: var(--bg-sidebar-solid);
   color: #fff;
   padding: 4px 10px;
   border-radius: 4px;
@@ -597,10 +621,10 @@ tr:hover { background: rgba(99,102,241,0.03); }
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.5); }
 
 /* Workbench */
 .workbench-grid {
@@ -870,6 +894,53 @@ tr:hover { background: rgba(99,102,241,0.03); }
   box-shadow: 0 4px 30px rgba(0,0,0,0.5);
 }
 
+/* Board Gallery */
+.board-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+.board-gallery-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.board-gallery-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+.board-gallery-item img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+.board-gallery-info {
+  padding: 10px 12px;
+}
+.board-gallery-date {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--text);
+}
+.board-gallery-content {
+  font-size: 0.75em;
+  color: var(--text-light);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.board-gallery-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-light);
+}
+.board-gallery-empty .empty-icon { font-size: 3em; margin-bottom: 12px; }
+
 /* Meeting Summary Import */
 .meeting-import-area {
   background: #fefce8;
@@ -1015,7 +1086,7 @@ tr:hover { background: rgba(99,102,241,0.03); }
   background: var(--primary-bg);
 }
 .cal-cell.cal-today-col {
-  background: rgba(79,70,229,0.02);
+  background: rgba(16,185,129,0.04);
 }
 .cal-cell.cal-today-col:hover {
   background: var(--primary-bg);
@@ -1237,15 +1308,11 @@ tr:hover { background: rgba(99,102,241,0.03); }
     <div class="modal-body">
       <input type="hidden" id="editSessionId">
       <div class="form-group">
-        <label>快速填充模板</label>
-        <div class="template-btns">
-          <div class="template-btn" onclick="applyTemplate('new')">📖 新课讲解</div>
-          <div class="template-btn" onclick="applyTemplate('exercise')">✏️ 习题训练</div>
-          <div class="template-btn" onclick="applyTemplate('review')">🔄 复习巩固</div>
-          <div class="template-btn" onclick="applyTemplate('exam')">📝 考试讲评</div>
-          <div class="template-btn" onclick="applyTemplate('mistake')">❌ 错题分析</div>
-          <div class="template-btn" onclick="applyTemplate('weak')">🎯 专项突破</div>
-          <div class="template-btn" onclick="copyLastSession()">📋 复用上次课程</div>
+        <label>📎 腾讯会议总结 <span style="font-weight:400;color:var(--text-light)">（粘贴会议自动生成的文字总结，点击智能提取自动填充下方字段）</span></label>
+        <textarea class="meeting-import-area" id="sessMeetingSummary" placeholder="粘贴腾讯会议的文字总结..." rows="4"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-outline" onclick="extractFromMeetingSummary()">🧠 智能提取</button>
+          <button class="btn btn-outline" onclick="copyLastSession()">📋 复用上次课程</button>
         </div>
       </div>
       <div class="form-row">
@@ -1271,10 +1338,6 @@ tr:hover { background: rgba(99,102,241,0.03); }
           <div class="board-upload-hint" id="boardUploadHint">📷 点击上传板书截图 / 拖拽图片到此处 / Ctrl+V 粘贴</div>
           <div class="board-thumbs" id="boardThumbs"></div>
         </div>
-      </div>
-      <div class="form-group">
-        <label>📎 腾讯会议总结 <span style="font-weight:400;color:var(--text-light)">（粘贴会议自动生成的文字总结）</span></label>
-        <textarea class="meeting-import-area" id="sessMeetingSummary" placeholder="粘贴腾讯会议的文字总结..." rows="3"></textarea>
       </div>
       <div class="form-group">
         <label class="payment-toggle">
@@ -1690,6 +1753,7 @@ function switchPage(page) {
     }
   }
   currentPage = page;
+  boardGalleryMode = false;
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
   const titles = { workbench:'今日工作台', calendar:'排课日历', dashboard:'数据分析', students:'学生管理', sessions:'课程记录', grades:'成绩分析', report:'家长报告', suggest:'排课建议' };
   document.getElementById('pageTitle').textContent = titles[page] || '';
@@ -1836,6 +1900,7 @@ function deleteStudent(id) {
 
 function selectStudent(id) {
   selectedStudentId = id;
+  boardGalleryMode = false;
   renderPage();
 }
 
@@ -2507,7 +2572,7 @@ function renderCalendar(container) {
         data: {
           labels: weekLabels,
           datasets: [
-            { label: '计划单价', data: planRateData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.3, pointRadius: 4 },
+            { label: '计划单价', data: planRateData, borderColor: '#059669', backgroundColor: 'rgba(5,150,105,0.1)', fill: true, tension: 0.3, pointRadius: 4 },
             { label: '实际单价', data: actualRateData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3, pointRadius: 4 }
           ]
         },
@@ -2848,6 +2913,7 @@ function duplicateSession(sid) {
 }
 
 function renderSessions(container) {
+  if (boardGalleryMode) { renderBoardGallery(container); return; }
   const s = getStudent(selectedStudentId);
   if (!s) { renderStudentPicker(container, currentPage); return; }
   const totalHours = s.sessions.reduce((a,b) => a + (b.duration||0), 0);
@@ -2860,6 +2926,7 @@ function renderSessions(container) {
       <div class="card-header">
         <h3>📝 ${escapeHtml(s.name)} 的课程记录</h3>
         <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="toggleBoardGallery()">🖼️ 板书集</button>
           <button class="btn btn-success btn-sm" onclick="openFeedback()">📤 课后反馈</button>
           <button class="btn btn-primary btn-sm" onclick="openAddSession()">+ 添加课程</button>
         </div>
@@ -2894,46 +2961,160 @@ function renderSessions(container) {
   container.innerHTML = html;
 }
 
-// ============ SESSION TEMPLATES ============
-const SESSION_TEMPLATES = {
-  new: {
-    content: '【新课讲解】\n知识点：\n例题：\n练习：',
-    homework: '课后习题：\n预习内容：',
-    notes: ''
-  },
-  exercise: {
-    content: '【习题训练】\n训练范围：\n题量：\n重点题型：',
-    homework: '错题整理：\n薄弱环节练习：',
-    notes: ''
-  },
-  review: {
-    content: '【复习巩固】\n复习模块：\n回顾重点：\n查漏补缺：',
-    homework: '复习笔记整理：\n针对性练习：',
-    notes: ''
-  },
-  exam: {
-    content: '【考试讲评】\n考试名称：\n得分情况：\n错题分析：',
-    homework: '错题重做：\n薄弱知识点复习：',
-    notes: ''
-  },
-  mistake: {
-    content: '【错题分析】\n错题来源：\n错误类型：\n知识点：',
-    homework: '同类题型巩固：',
-    notes: ''
-  },
-  weak: {
-    content: '【专项突破】\n突破模块：\n训练方法：\n掌握情况：',
-    homework: '专项练习：',
-    notes: ''
-  }
-};
+// ============ 板书集 ============
+let boardGalleryMode = false;
 
-function applyTemplate(type) {
-  const tpl = SESSION_TEMPLATES[type];
-  if (!tpl) return;
-  document.getElementById('sessContent').value = tpl.content;
-  document.getElementById('sessHomework').value = tpl.homework;
-  if (tpl.notes) document.getElementById('sessNotes').value = tpl.notes;
+function toggleBoardGallery() {
+  boardGalleryMode = !boardGalleryMode;
+  renderPage();
+}
+
+function renderBoardGallery(container) {
+  const s = getStudent(selectedStudentId);
+  if (!s) { renderStudentPicker(container, currentPage); return; }
+
+  // 收集所有有板书的课程，按日期倒序
+  const sessionsWithBoards = s.sessions
+    .filter(sess => sess.boardImages && sess.boardImages.length > 0)
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  const totalImages = sessionsWithBoards.reduce((sum, sess) => sum + sess.boardImages.length, 0);
+
+  let html = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon">🖼️</div><div class="stat-value">${totalImages}</div><div class="stat-label">板书总数</div></div>
+      <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-value">${sessionsWithBoards.length}</div><div class="stat-label">有板书的课程</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3>🖼️ ${escapeHtml(s.name)} 的板书集</h3>
+        <button class="btn btn-outline btn-sm" onclick="toggleBoardGallery()">← 返回课程列表</button>
+      </div>
+      <div class="card-body">
+  `;
+
+  if (sessionsWithBoards.length === 0) {
+    html += '<div class="board-gallery-empty"><div class="empty-icon">🖼️</div><p>还没有板书截图</p><p style="font-size:0.85em">在课程记录中上传板书后会自动归档到这里</p></div>';
+  } else {
+    // 收集所有图片到全局数组，通过索引引用避免base64内联
+    window._boardGalleryImages = [];
+    html += '<div class="board-gallery">';
+    sessionsWithBoards.forEach(sess => {
+      const typeInfo = SESSION_TYPES[sess.type] || SESSION_TYPES.knowledge;
+      const contentBrief = (sess.content || '').slice(0, 30) + ((sess.content || '').length > 30 ? '...' : '');
+      sess.boardImages.forEach(img => {
+        const idx = window._boardGalleryImages.length;
+        window._boardGalleryImages.push(img);
+        html += `
+          <div class="board-gallery-item" onclick="viewBoardImage(window._boardGalleryImages[${idx}])">
+            <img src="${img}" alt="板书" loading="lazy">
+            <div class="board-gallery-info">
+              <div class="board-gallery-date">${sess.date || '未知日期'} ${typeInfo.icon} ${typeInfo.label}</div>
+              <div class="board-gallery-content">${escapeHtml(contentBrief)}</div>
+            </div>
+          </div>
+        `;
+      });
+    });
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function viewBoardImage(src) {
+  const overlay = document.getElementById('boardPreviewOverlay');
+  const img = document.getElementById('boardPreviewImg');
+  if (overlay && img) {
+    img.src = src;
+    overlay.classList.add('show');
+  }
+}
+
+// ============ 会议总结解析（共享函数） ============
+function parseMeetingSummary(text) {
+  if (!text) return { content: '', homework: '' };
+
+  const lines = text.split('\n');
+  const sectionRe = /^[一二三四五六七八九十]+[、.]/;
+  const subRe = /^\d+[.、]\s*(.+)/;
+
+  // 提取会议摘要
+  let summary = '';
+  const summaryMatch = text.match(/会议摘要[：:]\s*([\s\S]*?)(?=\n[-—]{2,}|\n[一二三四五六七八九十]+[、.])/);
+  if (summaryMatch) {
+    summary = summaryMatch[1].trim()
+      .replace(/本次课程/g, '这节课')
+      .replace(/进行了详细/g, '详细')
+      .replace(/讲解了/g, '讲了')
+      .replace(/解析了/g, '讲了')
+      .replace(/演示了/g, '带孩子练了');
+  }
+
+  // 按章节分组，只提取每个章节下紧跟的第一层级小节标题
+  const sectionHeaders = [];
+  const keyPoints = [];
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (sectionRe.test(t)) {
+      const header = t.replace(/^[一二三四五六七八九十]+[、.]\s*/, '').trim();
+      sectionHeaders.push(header);
+      // 往下找这个章节的第一层小节（最多取到下一个章节或空行前）
+      for (let j = i + 1; j < lines.length; j++) {
+        const sub = lines[j].trim();
+        if (!sub) continue; // 跳过空行继续找
+        if (sectionRe.test(sub)) break; // 到下一个大章节了
+        if (/^[-—]{2,}$/.test(sub)) continue; // 跳过分隔线
+        const m = sub.match(/^\d+[.、]\s*(.+)/);
+        if (m) {
+          let pt = m[1].replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').trim();
+          if (pt.length > 60) pt = pt.slice(0, 60) + '……';
+          keyPoints.push(pt);
+        }
+      }
+    }
+  }
+
+  // 提取作业
+  const hwKw = /作业|练习题|课后.*(?:做|完成)|复习题|错题整理|巩固练习|布置.*题|预习第/;
+  const homeworkLines = [];
+  for (const line of lines) {
+    const t = line.trim();
+    if (hwKw.test(t)) homeworkLines.push(t);
+  }
+
+  // 组装教学内容
+  let contentParts = [];
+  if (summary) {
+    contentParts.push(summary);
+  } else if (sectionHeaders.length > 0) {
+    const cleanHeaders = sectionHeaders.map(h =>
+      h.replace(/的核心概念|的判定与解题策略|与实战演练|的综合题|与.*?的.*$/g, '')
+    );
+    contentParts.push(`主要讲了${cleanHeaders.join('和')}。`);
+  }
+  if (keyPoints.length > 0) {
+    contentParts.push('\n重点带孩子过了以下内容：');
+    keyPoints.slice(0, 8).forEach(p => { contentParts.push(`- ${p}`); });
+  }
+
+  return {
+    content: contentParts.join('\n'),
+    homework: homeworkLines.join('\n')
+  };
+}
+
+// ============ 智能提取按钮 ============
+function extractFromMeetingSummary() {
+  const text = document.getElementById('sessMeetingSummary').value.trim();
+  if (!text) { alert('请先粘贴腾讯会议的文字总结'); return; }
+
+  const result = parseMeetingSummary(text);
+  document.getElementById('sessContent').value = result.content;
+  document.getElementById('sessHomework').value = result.homework;
+  document.getElementById('sessNotes').value = '';
+  alert('已从会议总结中提取内容，请检查并补充');
 }
 
 function copyLastSession() {
@@ -3098,83 +3279,75 @@ function generateFeedback() {
 
   // Psychology sessions get a different template
   if (sess.type === 'psychology') {
-    fb += `亲爱的家长您好！以下是${s.name}本次课程的沟通反馈：\n\n`;
-    fb += `📅 沟通日期：${sess.date || todayStr()}\n\n`;
-    fb += `💬 沟通内容\n`;
-    fb += `本次课程我们进行了一次深入的学习沟通交流，主要围绕以下方面：\n`;
+    fb += `家长您好！跟您说一下${s.name}这节课的沟通情况。\n\n`;
+    fb += `今天主要跟${s.name}聊了聊，围绕以下方面：\n`;
     contentLines.forEach(line => { fb += `${line}\n`; });
     fb += '\n';
     if (sess.notes) {
-      fb += `📋 老师观察\n`;
-      fb += `${sess.notes}\n\n`;
+      fb += `说一下我的观察：${sess.notes}\n\n`;
     }
-    fb += `🌟 老师寄语\n`;
-    fb += `${encourage}\n`;
-    fb += `${s.name}是一个有潜力的孩子，通过今天的沟通，我相信TA会以更好的状态投入到后续的学习中。`;
-    fb += `作为老师，我会持续关注TA的心理状态和学习情况，也请家长在日常生活中多给予鼓励和支持。\n\n`;
-    fb += `如有任何问题，欢迎随时沟通交流。`;
+    fb += `${s.name}是个有潜力的孩子，今天聊完之后，我觉得TA状态会好很多。`;
+    fb += `后续我会继续关注TA的心理状态，家长在家也多鼓励鼓励TA。\n\n`;
+    fb += `有任何问题随时跟我沟通~`;
   } else {
-    // Normal teaching feedback
-    fb += `亲爱的家长您好！以下是${s.name}本次课程的学习反馈：\n\n`;
+    // 基于会议总结的结构化反馈
+    // 优先从会议总结中提取内容，若无则使用手动填写的字段
+    let mainContent = sess.content || '';
+    let hwContent = sess.homework || '';
+    let notesContent = sess.notes || '';
 
-    fb += `📚 课程信息\n`;
-    fb += `上课日期：${sess.date || todayStr()}\n`;
-    fb += `课程类型：${typeInfo.label}\n`;
-    fb += `课程时长：${sess.duration || 1}小时\n\n`;
+    if (sess.meetingSummary && !mainContent) {
+      const parsed = parseMeetingSummary(sess.meetingSummary);
+      if (parsed.content) mainContent = parsed.content;
+      if (!hwContent && parsed.homework) hwContent = parsed.homework;
+    }
 
-    fb += `📖 本节课内容\n`;
-    if (contentLines.length > 0) {
-      contentLines.forEach(line => { fb += `${line}\n`; });
+    const mainLines = mainContent.split('\n').filter(l => l.trim());
+
+    fb += `家长您好！跟您说一下${s.name}${sess.date || todayStr()}这节课的情况。\n\n`;
+
+    fb += `今天上了${sess.duration || 1}小时的${typeInfo.label}，`;
+    if (mainLines.length > 0) {
+      fb += `主要内容是：\n`;
+      mainLines.forEach(line => { fb += `${line}\n`; });
     } else {
-      fb += `${sess.content || '详见课堂笔记'}\n`;
+      fb += `具体内容可以看课堂笔记。\n`;
     }
     fb += '\n';
 
-    if (sess.homework) {
-      fb += `📝 作业安排\n`;
-      fb += `${sess.homework}\n`;
-      fb += `请家长协助提醒孩子按时完成，有任何疑问欢迎随时沟通。\n\n`;
+    if (hwContent) {
+      fb += `课后作业：\n${hwContent}\n\n`;
     }
 
-    if (sess.notes) {
-      fb += `💬 课堂表现\n`;
-      fb += `${sess.notes}\n\n`;
+    if (notesContent) {
+      fb += `说一下${s.name}这节课的表现：${notesContent}\n\n`;
     }
 
-    // Improvement direction based on weak modules
     if (weakMods.length > 0) {
-      fb += `🎯 后续教学计划\n`;
-      fb += `接下来我们会重点关注以下模块的巩固提升：\n`;
-      weakMods.slice(0, 3).forEach(m => { fb += `· ${m}\n`; });
-      fb += `请家长鼓励孩子在家也多关注这些内容，有疑问随时联系我。\n\n`;
+      fb += `接下来我会重点带${s.name}加强${weakMods.slice(0, 3).join('、')}这些内容，`;
+      fb += `家长在家也可以多关注一下。\n\n`;
     }
 
-    // Add exam score context if available
     if (s.exams && s.exams.length > 0) {
-      const latest = s.exams[0]; // Already sorted desc
+      const latest = s.exams[0];
       const pct = (latest.score / latest.fullScore * 100).toFixed(1);
-      fb += `📊 成绩参考\n`;
-      fb += `最近一次考试（${latest.name}）得分率 ${pct}%`;
+      fb += `顺便提一下，最近一次考试（${latest.name}）得分率${pct}%`;
       if (s.exams.length >= 2) {
         const prev = s.exams[1];
         const prevPct = (prev.score / prev.fullScore * 100).toFixed(1);
         const diff = (parseFloat(pct) - parseFloat(prevPct)).toFixed(1);
-        if (diff > 0) fb += `，较上次提升 ${diff} 个百分点`;
-        else if (diff < 0) fb += `，较上次下降 ${Math.abs(diff)} 个百分点`;
+        if (diff > 0) fb += `，比上次进步了${diff}个百分点`;
+        else if (diff < 0) fb += `，比上次下降了${Math.abs(diff)}个百分点`;
       }
-      fb += '。\n\n';
+      fb += '，继续加油。\n\n';
     }
 
-    fb += `💪 老师寄语\n`;
-    fb += `${encourage}\n`;
-    fb += `${s.name}在这节课的表现整体不错，`;
     if (strongMods.length > 0) {
-      fb += `在${strongMods[0]}方面已经有了很好的基础。`;
+      fb += `${s.name}在${strongMods[0]}这块基础不错，保持住就好。`;
     } else {
-      fb += `学习态度端正，值得肯定。`;
+      fb += `${s.name}学习态度挺好的，继续保持。`;
     }
-    fb += `只要保持学习的节奏，相信一定会有更大的进步！\n\n`;
-    fb += `如有任何问题，欢迎随时与我沟通交流，我们一起帮助${s.name}取得更好的成绩！`;
+    fb += `${encourage}\n\n有任何问题随时跟我沟通~`;
   }
 
   document.getElementById('feedbackContent').textContent = fb;
@@ -3361,11 +3534,11 @@ function renderGrades(container) {
           datasets: [{
             label: '得分率 %',
             data: sorted.map(e => (e.score/e.fullScore*100).toFixed(1)),
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99,102,241,0.1)',
+            borderColor: '#059669',
+            backgroundColor: 'rgba(5,150,105,0.1)',
             fill: true,
             tension: 0.3,
-            pointBackgroundColor: '#6366f1',
+            pointBackgroundColor: '#059669',
             pointRadius: 5
           }]
         },
@@ -3390,9 +3563,9 @@ function renderGrades(container) {
             datasets: [{
               label: '掌握度',
               data: top8.map(m => m.level),
-              backgroundColor: 'rgba(99,102,241,0.2)',
-              borderColor: '#6366f1',
-              pointBackgroundColor: '#6366f1'
+              backgroundColor: 'rgba(5,150,105,0.15)',
+              borderColor: '#059669',
+              pointBackgroundColor: '#059669'
             }]
           },
           options: {
@@ -3890,4 +4063,3 @@ doInit();
 </script>
 </body>
 </html>
-

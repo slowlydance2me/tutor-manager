@@ -1671,6 +1671,7 @@ async function reloadData() {
   if (data && data.students && Array.isArray(data.students)) {
     appData = data;
     lastLoadTime = new Date();
+    validateSelectedStudent();
     renderPage();
     updateFileStatus();
   } else {
@@ -1688,6 +1689,7 @@ async function selectAndLoadFile() {
     const data = await readFile(dataFileHandle);
     if (data && data.students) {
       appData = data;
+      validateSelectedStudent();
       saveData(appData);
       renderPage();
       updateFileStatus();
@@ -1703,6 +1705,7 @@ async function switchDataFile() {
     const data = await createDataFile();
     if (data) {
       appData = data;
+      validateSelectedStudent();
       renderPage();
       updateFileStatus();
     }
@@ -1734,12 +1737,18 @@ let selectedStudentId = null;
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function safePct(score, full) { return full > 0 ? (score / full * 100) : 0; }
 function fmtDate(d) { return d || '-'; }
-function todayStr() {
-  const d = new Date();
+function todayStr() { return dateToStr(new Date()); }
+function dateToStr(d) {
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function getStudent(id) { return appData.students.find(s => s.id === id); }
+function validateSelectedStudent() {
+  if (selectedStudentId && !getStudent(selectedStudentId)) {
+    selectedStudentId = appData.students.length > 0 ? appData.students[0].id : null;
+  }
+}
 function getAllModules() { return [...DEFAULT_MODULES, ...appData.settings.customModules]; }
 
 // ============ NAVIGATION ============
@@ -1770,7 +1779,7 @@ function renderStudentSwitcher() {
   }
   el.style.display = '';
   const s = getStudent(selectedStudentId);
-  el.innerHTML = `<select class="student-switcher-select" onchange="selectStudent(this.value);renderPage()">
+  el.innerHTML = `<select class="student-switcher-select" onchange="selectStudent(this.value)">
     ${appData.students.map(st => `<option value="${st.id}" ${st.id===selectedStudentId?'selected':''}>${escapeHtml(st.name)}（${st.grade}）</option>`).join('')}
   </select>`;
 }
@@ -1875,7 +1884,9 @@ function saveStudent() {
     customModules: customMods, hourlyRate, weeklySchedule
   };
   if (editId) {
-    Object.assign(getStudent(editId), commonData);
+    const existing = getStudent(editId);
+    if (!existing) return;
+    Object.assign(existing, commonData);
   } else {
     const modules = {};
     getAllModules().forEach(m => modules[m] = 0);
@@ -1915,10 +1926,10 @@ function renderStudents(container) {
     const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
     const totalSessions = s.sessions.length;
     const totalHours = s.sessions.reduce((a,b) => a + (b.duration||0), 0);
-    const avgScore = s.exams.length ? (s.exams.reduce((a,b) => a + b.score/b.fullScore*100, 0) / s.exams.length).toFixed(1) : '-';
+    const avgScore = s.exams.length ? (s.exams.reduce((a,b) => a + safePct(b.score, b.fullScore), 0) / s.exams.length).toFixed(1) : '-';
     const schedule = (s.weeklySchedule || []).map(sch => DAY_NAMES[sch.day] + sch.time).join('、');
     html += `<div class="student-card-item" onclick="selectStudent('${s.id}')">
-      <div class="student-avatar" style="background:${color}">${s.name[0]}</div>
+      <div class="student-avatar" style="background:${color}">${escapeHtml(s.name[0])}</div>
       <div class="student-info">
         <div class="student-name">${escapeHtml(s.name)} <span class="tag tag-grade">${s.grade}</span>${s.hourlyRate ? ` <span style="font-size:0.78em;color:var(--success)">¥${s.hourlyRate}/h</span>` : ''}</div>
         <div class="student-meta">
@@ -1984,7 +1995,7 @@ function getWeekStats() {
   const dayOfWeek = now.getDay();
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-  const weekStartStr = weekStart.toISOString().slice(0, 10);
+  const weekStartStr = dateToStr(weekStart);
 
   let weekHours = 0, weekSessions = 0, weekIncome = 0;
   appData.students.forEach(s => {
@@ -1992,7 +2003,7 @@ function getWeekStats() {
       if (sess.date && sess.date >= weekStartStr) {
         weekHours += sess.duration || 0;
         weekSessions++;
-        weekIncome += (sess.duration || 0) * (s.hourlyRate || 0);
+        if (sess.paid !== false) weekIncome += (sess.duration || 0) * (s.hourlyRate || 0);
       }
     });
   });
@@ -2232,7 +2243,7 @@ function renderStudentPicker(container, pageName) {
   appData.students.forEach((s, i) => {
     const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
     html += `<div class="student-card-item" onclick="selectedStudentId='${s.id}';renderStudentSwitcher();renderPage()">
-      <div class="student-avatar" style="background:${color}">${s.name[0]}</div>
+      <div class="student-avatar" style="background:${color}">${escapeHtml(s.name[0])}</div>
       <div class="student-info">
         <div class="student-name">${escapeHtml(s.name)} <span class="tag tag-grade">${s.grade}</span></div>
       </div>
@@ -2286,8 +2297,8 @@ function getWeekSessions(monday) {
   const sessions = [];
   const sunday = new Date(monday);
   sunday.setDate(sunday.getDate() + 6);
-  const startStr = monday.toISOString().slice(0, 10);
-  const endStr = sunday.toISOString().slice(0, 10);
+  const startStr = dateToStr(monday);
+  const endStr = dateToStr(sunday);
 
   appData.students.forEach(s => {
     (s.sessions || []).forEach(sess => {
@@ -2362,7 +2373,7 @@ function renderCalendar(container) {
     dayOrder.forEach(dow => {
       const dd = dayDateMap[dow];
       const isToday = dd.getTime() === today.getTime();
-      const dateStr = dd.toISOString().slice(0, 10);
+      const dateStr = dateToStr(dd);
 
       // Find schedule items starting at this hour
       const cellItems = scheduleItems.filter(s => {
@@ -2386,8 +2397,8 @@ function renderCalendar(container) {
         const eventH = item.duration * 38 - 2;
         const minStart = parseInt((item.time || '0:00').split(':')[1] || '0');
         const topOffset = (minStart / 60) * 38 + 1;
-        html += `<div class="cal-event" style="background:${item.color};opacity:${opacity};height:${eventH}px;top:${topOffset}px" onclick="event.stopPropagation();openScheduleModal('${item.studentId}',${item.scheduleIdx})" title="${item.studentName} ${item.time} (${item.duration}h)${recorded ? ' - 已上课' : ''}">
-          <span class="cal-event-name">${item.studentName}${checkmark}</span>
+        html += `<div class="cal-event" style="background:${item.color};opacity:${opacity};height:${eventH}px;top:${topOffset}px" onclick="event.stopPropagation();openScheduleModal('${item.studentId}',${item.scheduleIdx})" title="${escapeHtml(item.studentName)} ${item.time} (${item.duration}h)${recorded ? ' - 已上课' : ''}">
+          <span class="cal-event-name">${escapeHtml(item.studentName)}${checkmark}</span>
           <span class="cal-event-time">${item.time} · ${item.duration}h</span>
         </div>`;
       });
@@ -2395,8 +2406,6 @@ function renderCalendar(container) {
       html += `</div>`;
     });
   }
-
-  html += `</div>`;
 
   html += `</div>`; // close cal-grid
 
@@ -2413,6 +2422,7 @@ function renderCalendar(container) {
   }
 
   html += `</div>`; // close cal-grid-wrap
+  // 注意：原来的 html += '</div>' 已删除，它是多余的闭合标签
 
   // Summary section
   const totalScheduledHours = scheduleItems.reduce((a, s) => a + s.duration, 0);
@@ -2525,9 +2535,12 @@ function renderCalendar(container) {
 
   // Chart 1: 每周课时对比
   setTimeout(() => {
+    if (weekHoursChart) { weekHoursChart.destroy(); weekHoursChart = null; }
+    if (weekIncomeChart) { weekIncomeChart.destroy(); weekIncomeChart = null; }
+    if (weekRateChart) { weekRateChart.destroy(); weekRateChart = null; }
     const ctx1 = document.getElementById('weekHoursChart');
     if (ctx1) {
-      new Chart(ctx1, {
+      weekHoursChart = new Chart(ctx1, {
         type: 'bar',
         data: {
           labels: weekLabels,
@@ -2547,7 +2560,7 @@ function renderCalendar(container) {
     // Chart 2: 每周收入对比
     const ctx2 = document.getElementById('weekIncomeChart');
     if (ctx2) {
-      new Chart(ctx2, {
+      weekIncomeChart = new Chart(ctx2, {
         type: 'bar',
         data: {
           labels: weekLabels,
@@ -2567,7 +2580,7 @@ function renderCalendar(container) {
     // Chart 3: 单位课时收入单价
     const ctx3 = document.getElementById('weekRateChart');
     if (ctx3) {
-      new Chart(ctx3, {
+      weekRateChart = new Chart(ctx3, {
         type: 'line',
         data: {
           labels: weekLabels,
@@ -2589,9 +2602,8 @@ function renderCalendar(container) {
 async function exportCalendarImage() {
   const gridWrap = document.querySelector('.cal-grid-wrap');
   if (!gridWrap) return;
-  const btn = event.target;
-  btn.textContent = '生成中...';
-  btn.disabled = true;
+  const btn = gridWrap.parentElement.querySelector('button[onclick*="exportCalendarImage"]') || document.querySelector('button[onclick*="exportCalendarImage"]');
+  if (btn) { btn.textContent = '生成中...'; btn.disabled = true; }
   try {
     const canvas = await html2canvas(gridWrap, {
       backgroundColor: '#ffffff',
@@ -2602,14 +2614,13 @@ async function exportCalendarImage() {
     const link = document.createElement('a');
     const monday = getMonday(calWeekOffset);
     const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
-    link.download = `课表_${monday.getMonth()+1}.${monday.getDate()}-${sunday.getMonth()+1}.${sunday.getDate()}.png`;
+    link.download = `课表_${monday.getFullYear()}.${monday.getMonth()+1}.${monday.getDate()}-${sunday.getFullYear()}.${sunday.getMonth()+1}.${sunday.getDate()}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   } catch(e) {
     alert('生成失败：' + e.message);
   }
-  btn.textContent = '📸 生成课表图片';
-  btn.disabled = false;
+  if (btn) { btn.textContent = '📸 生成课表图片'; btn.disabled = false; }
 }
 
 function calCellClick(day, time) {
@@ -2832,6 +2843,7 @@ function openAddSession() {
 
 function openEditSession(sid) {
   const s = getStudent(selectedStudentId);
+  if (!s) return;
   const sess = s.sessions.find(x => x.id === sid);
   if (!sess) return;
   document.getElementById('sessionModalTitle').textContent = '编辑课程';
@@ -2847,6 +2859,13 @@ function openEditSession(sid) {
   boardImages = (sess.boardImages || []).slice();
   renderBoardThumbs();
   setTimeout(initBoardUpload, 50);
+  // 保留原有 scheduledTime，避免工作台匹配丢失
+  const modal = document.getElementById('sessionModal');
+  if (sess.scheduledTime) {
+    modal.dataset.scheduledTime = sess.scheduledTime;
+  } else {
+    delete modal.dataset.scheduledTime;
+  }
   openModal('sessionModal');
 }
 
@@ -2884,6 +2903,7 @@ function saveSession() {
 function deleteSession(sid) {
   if (!confirm('确定删除此课程记录？')) return;
   const s = getStudent(selectedStudentId);
+  if (!s) return;
   s.sessions = s.sessions.filter(x => x.id !== sid);
   saveData(appData);
   renderPage();
@@ -2898,7 +2918,7 @@ function duplicateSession(sid) {
   if (orig.date) {
     const d = new Date(orig.date + 'T00:00:00');
     d.setDate(d.getDate() + 7);
-    nextDate = d.toISOString().slice(0,10);
+    nextDate = dateToStr(d);
   }
   s.sessions.push({
     id: genId(), date: nextDate, duration: orig.duration,
@@ -3135,7 +3155,7 @@ function copyLastSession() {
   if (last.date) {
     const d = new Date(last.date + 'T00:00:00');
     d.setDate(d.getDate() + 7);
-    document.getElementById('sessDate').value = d.toISOString().slice(0,10);
+    document.getElementById('sessDate').value = dateToStr(d);
   }
 }
 
@@ -3149,10 +3169,12 @@ function insertNote(text) {
 let boardImages = []; // temp array for current session editing
 
 function compressImage(file, maxWidth, quality) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    reader.onerror = () => reject(new Error('文件读取失败'));
     reader.onload = function(e) {
       const img = new Image();
+      img.onerror = () => reject(new Error('图片加载失败'));
       img.onload = function() {
         const canvas = document.createElement('canvas');
         let w = img.width, h = img.height;
@@ -3172,8 +3194,12 @@ function compressImage(file, maxWidth, quality) {
 async function handleBoardFiles(files) {
   for (const file of files) {
     if (!file.type.startsWith('image/')) continue;
-    const dataUrl = await compressImage(file, 800, 0.6);
-    boardImages.push(dataUrl);
+    try {
+      const dataUrl = await compressImage(file, 800, 0.6);
+      boardImages.push(dataUrl);
+    } catch (err) {
+      console.warn('图片处理失败:', err);
+    }
   }
   renderBoardThumbs();
 }
@@ -3210,21 +3236,30 @@ function previewBoardImage(idx) {
   }
 }
 
+let _boardUploadInitialized = false;
+let _boardPasteHandler = null;
+
 function initBoardUpload() {
   const area = document.getElementById('boardUploadArea');
   if (!area) return;
 
-  // Drag and drop
-  area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('drag-over'); });
-  area.addEventListener('dragleave', () => { area.classList.remove('drag-over'); });
-  area.addEventListener('drop', (e) => {
-    e.preventDefault();
-    area.classList.remove('drag-over');
-    if (e.dataTransfer.files.length > 0) handleBoardFiles(e.dataTransfer.files);
-  });
+  // Drag and drop — 只绑定一次
+  if (!area._dragBound) {
+    area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('drag-over'); });
+    area.addEventListener('dragleave', () => { area.classList.remove('drag-over'); });
+    area.addEventListener('drop', (e) => {
+      e.preventDefault();
+      area.classList.remove('drag-over');
+      if (e.dataTransfer.files.length > 0) handleBoardFiles(e.dataTransfer.files);
+    });
+    area._dragBound = true;
+  }
 
-  // Paste
-  document.addEventListener('paste', function onPaste(e) {
+  // Paste — 只绑定一次，先移除旧的再添加
+  if (_boardPasteHandler) {
+    document.removeEventListener('paste', _boardPasteHandler);
+  }
+  _boardPasteHandler = function onPaste(e) {
     if (!document.getElementById('sessionModal') || !document.getElementById('sessionModal').classList.contains('show')) return;
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -3235,7 +3270,8 @@ function initBoardUpload() {
         if (file) handleBoardFiles([file]);
       }
     }
-  });
+  };
+  document.addEventListener('paste', _boardPasteHandler);
 }
 
 // ============ POST-CLASS FEEDBACK ============
@@ -3349,11 +3385,11 @@ function generateFeedback() {
 
     if (s.exams && s.exams.length > 0) {
       const latest = s.exams[0];
-      const pct = (latest.score / latest.fullScore * 100).toFixed(1);
+      const pct = safePct(latest.score, latest.fullScore).toFixed(1);
       fb += `顺便提一下，最近一次考试（${latest.name}）得分率${pct}%`;
       if (s.exams.length >= 2) {
         const prev = s.exams[1];
-        const prevPct = (prev.score / prev.fullScore * 100).toFixed(1);
+        const prevPct = safePct(prev.score, prev.fullScore).toFixed(1);
         const diff = (parseFloat(pct) - parseFloat(prevPct)).toFixed(1);
         if (diff > 0) fb += `，比上次进步了${diff}个百分点`;
         else if (diff < 0) fb += `，比上次下降了${Math.abs(diff)}个百分点`;
@@ -3416,6 +3452,7 @@ function openAddExam() {
 
 function openEditExam(eid) {
   const s = getStudent(selectedStudentId);
+  if (!s) return;
   const e = s.exams.find(x => x.id === eid);
   if (!e) return;
   document.getElementById('examModalTitle').textContent = '编辑考试';
@@ -3459,6 +3496,7 @@ function saveExam() {
 function deleteExam(eid) {
   if (!confirm('确定删除此考试记录？')) return;
   const s = getStudent(selectedStudentId);
+  if (!s) return;
   s.exams = s.exams.filter(x => x.id !== eid);
   saveData(appData);
   renderPage();
@@ -3466,6 +3504,9 @@ function deleteExam(eid) {
 
 let gradeChart = null;
 let radarChart = null;
+let weekHoursChart = null;
+let weekIncomeChart = null;
+let weekRateChart = null;
 
 function renderGrades(container) {
   const s = getStudent(selectedStudentId);
@@ -3484,8 +3525,8 @@ function renderGrades(container) {
       <div class="card-body">
         <div class="module-grid" id="moduleGrid">
           ${modEntries.map(m => `<div class="module-item">
-            <span class="mod-name">${m.name}</span>
-            <select data-module="${m.name}">
+            <span class="mod-name">${escapeHtml(m.name)}</span>
+            <select data-module="${escapeHtml(m.name)}">
               <option value="0" ${m.level===0?'selected':''}>未接触</option>
               <option value="1" ${m.level===1?'selected':''}>了解</option>
               <option value="2" ${m.level===2?'selected':''}>理解</option>
@@ -3518,7 +3559,7 @@ function renderGrades(container) {
   } else {
     html += '<div class="table-wrap"><table><tr><th>考试</th><th>类型</th><th>日期</th><th>得分</th><th>满分</th><th>得分率</th><th>排名</th><th>操作</th></tr>';
     s.exams.forEach(e => {
-      const pct = ((e.score / e.fullScore) * 100).toFixed(1);
+      const pct = safePct(e.score, e.fullScore).toFixed(1);
       const pctColor = pct >= 85 ? 'var(--success)' : pct >= 60 ? 'var(--warning)' : 'var(--danger)';
       html += `<tr>
         <td>${escapeHtml(e.name)}</td>
@@ -3552,7 +3593,7 @@ function renderGrades(container) {
           labels: sorted.map(e => e.name),
           datasets: [{
             label: '得分率 %',
-            data: sorted.map(e => (e.score/e.fullScore*100).toFixed(1)),
+            data: sorted.map(e => safePct(e.score, e.fullScore).toFixed(1)),
             borderColor: '#059669',
             backgroundColor: 'rgba(5,150,105,0.1)',
             fill: true,
@@ -3657,7 +3698,7 @@ function buildReport(period) {
   else if (period === 'quarter') { startDate = new Date(now); startDate.setMonth(startDate.getMonth()-3); }
   else if (period === 'semester') { startDate = new Date(now.getFullYear(), now.getMonth() < 7 ? 0 : 6, 1); }
   else { startDate = new Date(2020,0,1); }
-  const startStr = startDate.toISOString().slice(0,10);
+  const startStr = dateToStr(startDate);
 
   const sessions = s.sessions.filter(sess => sess.date >= startStr);
   const exams = s.exams.filter(e => e.date >= startStr);
@@ -3676,8 +3717,8 @@ function buildReport(period) {
   let trendDetail = '';
   if (exams.length >= 2) {
     const sorted = [...exams].sort((a,b) => (a.date||'').localeCompare(b.date||''));
-    const first = sorted[0].score / sorted[0].fullScore * 100;
-    const last = sorted[sorted.length-1].score / sorted[sorted.length-1].fullScore * 100;
+    const first = safePct(sorted[0].score, sorted[0].fullScore);
+    const last = safePct(sorted[sorted.length-1].score, sorted[sorted.length-1].fullScore);
     const diff = (last - first).toFixed(1);
     if (last - first > 5) { trend = '明显进步'; trendDetail = `得分率从 ${first.toFixed(1)}% 提升至 ${last.toFixed(1)}%，提升 ${diff} 个百分点`; }
     else if (last - first > 0) { trend = '稳步提升'; trendDetail = `得分率从 ${first.toFixed(1)}% 提升至 ${last.toFixed(1)}%`; }
@@ -3706,7 +3747,7 @@ function buildReport(period) {
   if (exams.length > 0) {
     report += `📈 考试成绩\n`;
     exams.forEach(e => {
-      const pct = (e.score / e.fullScore * 100).toFixed(1);
+      const pct = safePct(e.score, e.fullScore).toFixed(1);
       report += `· ${e.name}（${e.date}）：${e.score}/${e.fullScore}，得分率 ${pct}%`;
       if (e.rank) report += `，排名 ${e.rank}`;
       report += '\n';
@@ -3801,7 +3842,7 @@ function renderSuggest(container) {
   if (s.exams.length >= 2) {
     const sorted = [...s.exams].sort((a,b) => (a.date||'').localeCompare(b.date||''));
     const recent = sorted.slice(-3);
-    const avgPct = recent.reduce((a,e) => a + e.score/e.fullScore*100, 0) / recent.length;
+    const avgPct = recent.reduce((a,e) => a + safePct(e.score, e.fullScore), 0) / recent.length;
     if (avgPct < 60) {
       suggestions.push({
         icon: '📉',
@@ -3822,7 +3863,7 @@ function renderSuggest(container) {
   // Session frequency
   const recent30 = s.sessions.filter(sess => {
     const d = new Date(); d.setDate(d.getDate()-30);
-    return sess.date >= d.toISOString().slice(0,10);
+    return sess.date >= dateToStr(d);
   });
   if (recent30.length < 4 && s.sessions.length > 0) {
     suggestions.push({
@@ -3951,6 +3992,7 @@ function importData(event) {
       if (imported.students && Array.isArray(imported.students)) {
         if (confirm(`确定导入数据？将覆盖当前 ${appData.students.length} 位学生数据。`)) {
           appData = imported;
+          validateSelectedStudent();
           saveData(appData);
           renderPage();
           alert('数据导入成功！');

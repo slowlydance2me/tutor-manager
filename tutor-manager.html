@@ -991,6 +991,60 @@ tr:hover { background: rgba(16,185,129,0.04); }
   accent-color: var(--success);
 }
 
+/* Month Selector */
+.month-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.month-selector .month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.month-selector .month-label {
+  font-size: 1em;
+  font-weight: 600;
+  min-width: 120px;
+  text-align: center;
+}
+.month-selector .month-label .year {
+  font-size: 0.85em;
+  font-weight: 400;
+  color: var(--text-light);
+}
+
+/* Change Percentage */
+.change-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.7em;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+.change-pct.up {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.change-pct.down {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.change-pct.flat {
+  background: rgba(148,163,184,0.1);
+  color: var(--text-light);
+}
+
 /* Calendar */
 .cal-header {
   display: flex;
@@ -1236,7 +1290,7 @@ tr:hover { background: rgba(16,185,129,0.04); }
         <span class="nav-icon">📋</span><span>家长报告</span>
       </div>
       <div class="nav-item" data-page="suggest" onclick="switchPage('suggest')">
-        <span class="nav-icon">🎯</span><span>排课建议</span>
+        <span class="nav-icon">📋</span><span>状态档案</span>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -1435,6 +1489,34 @@ tr:hover { background: rgba(16,185,129,0.04); }
         </div>
       </div>
       <div class="report-preview" id="feedbackContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Status Modal -->
+<div class="modal-overlay" id="statusModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h3>记录学生状态</h3>
+      <button class="modal-close" onclick="closeModal('statusModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>今日状态 *</label>
+        <div id="statusOptions" style="display:flex;gap:8px;margin-top:8px"></div>
+      </div>
+      <div class="form-group">
+        <label>✨ 闪光点 <span style="font-weight:400;color:var(--text-light)">（这节课哪里做得好，可选）</span></label>
+        <input class="form-input" id="statusHighlight" placeholder="例：主动提问了、计算准确率提高">
+      </div>
+      <div class="form-group">
+        <label>⚠️ 卡点 <span style="font-weight:400;color:var(--text-light)">（哪里卡住了，可选）</span></label>
+        <input class="form-input" id="statusBlocker" placeholder="例：三角函数公式不熟、审题不仔细">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('statusModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveStatus()">保存</button>
     </div>
   </div>
 </div>
@@ -1734,6 +1816,7 @@ async function recoverOldData() {
 let appData = null;
 let currentPage = 'workbench';
 let selectedStudentId = null;
+let selectedMonth = todayStr().slice(0,7); // 当前选中的月份，格式：YYYY-MM
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -1751,6 +1834,52 @@ function validateSelectedStudent() {
 }
 function getAllModules() { return [...DEFAULT_MODULES, ...appData.settings.customModules]; }
 
+// 月份相关辅助函数
+function getLastMonth(monthStr) {
+  const [y, m] = monthStr.split('-').map(Number);
+  const d = new Date(y, m - 2, 1); // 上个月
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function getMonthStats(monthStr) {
+  let sessions = 0, hours = 0, income = 0;
+  const studentBreakdown = {};
+  appData.students.forEach(s => {
+    let sSessions = 0, sHours = 0, sIncome = 0;
+    (s.sessions || []).forEach(sess => {
+      if (sess.date && sess.date.startsWith(monthStr)) {
+        sSessions++;
+        sHours += sess.duration || 0;
+        if (sess.paid !== false) sIncome += (sess.duration || 0) * (s.hourlyRate || 0);
+      }
+    });
+    if (sSessions > 0) {
+      studentBreakdown[s.id] = { name: s.name, sessions: sSessions, hours: sHours, income: sIncome };
+    }
+    sessions += sSessions;
+    hours += sHours;
+    income += sIncome;
+  });
+  return { sessions, hours, income, studentBreakdown };
+}
+
+function formatMonth(monthStr) {
+  const [y, m] = monthStr.split('-');
+  return `${y}年${parseInt(m)}月`;
+}
+
+function changeMonth(delta) {
+  const [y, m] = selectedMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  selectedMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  renderPage();
+}
+
+function goToCurrentMonth() {
+  selectedMonth = todayStr().slice(0, 7);
+  renderPage();
+}
+
 // ============ NAVIGATION ============
 function switchPage(page) {
   // 自动选择逻辑：只有一个学生时自动选中，否则在页面内显示选择界面
@@ -1764,7 +1893,7 @@ function switchPage(page) {
   currentPage = page;
   boardGalleryMode = false;
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
-  const titles = { workbench:'今日工作台', calendar:'排课日历', dashboard:'数据分析', students:'学生管理', sessions:'课程记录', grades:'成绩分析', report:'家长报告', suggest:'排课建议' };
+  const titles = { workbench:'今日工作台', calendar:'排课日历', dashboard:'数据分析', students:'学生管理', sessions:'课程记录', grades:'成绩分析', report:'家长报告', suggest:'状态档案' };
   document.getElementById('pageTitle').textContent = titles[page] || '';
   renderStudentSwitcher();
   renderPage();
@@ -2726,53 +2855,162 @@ function deleteSchedule() {
 function renderDashboard(container) {
   const students = appData.students;
   const totalStudents = students.length;
-  const thisMonth = todayStr().slice(0,7);
-  let monthHours = 0, monthSessions = 0, totalSessions = 0;
-  let monthIncome = 0, totalIncome = 0;
-  let upcomingExams = [];
-  let recentSessions = [];
+  const currentMonth = todayStr().slice(0,7);
+  const lastMonth = getLastMonth(selectedMonth);
+  const isCurrentMonth = selectedMonth === currentMonth;
 
+  // 获取选中月和上月的统计数据
+  const selectedStats = getMonthStats(selectedMonth);
+  const lastStats = getMonthStats(lastMonth);
+
+  // 计算变化百分比
+  function calcChange(current, prev) {
+    if (prev === 0) return current > 0 ? 100 : 0;
+    return ((current - prev) / prev * 100).toFixed(1);
+  }
+
+  function renderChangePct(current, prev, suffix = '') {
+    const change = calcChange(current, prev);
+    const isUp = change > 0;
+    const isDown = change < 0;
+    const cls = isUp ? 'up' : isDown ? 'down' : 'flat';
+    const arrow = isUp ? '↑' : isDown ? '↓' : '→';
+    const label = selectedMonth === currentMonth ? '较上月' : `较${formatMonth(lastMonth)}`;
+    return `<div class="change-pct ${cls}">${arrow} ${Math.abs(change)}% ${label}</div>`;
+  }
+
+  // 累计总收入
+  let totalIncome = 0;
   students.forEach(s => {
-    totalSessions += s.sessions.length;
-    s.sessions.forEach(sess => {
-      const cost = (sess.duration || 0) * (s.hourlyRate || 0);
-      if (sess.paid !== false) totalIncome += cost;
-      if (sess.date && sess.date.startsWith(thisMonth)) {
-        monthHours += sess.duration || 0;
-        monthSessions++;
-        if (sess.paid !== false) monthIncome += cost;
-      }
-      recentSessions.push({ ...sess, studentName: s.name, studentId: s.id });
-    });
-    s.exams.forEach(e => {
-      if (e.date >= todayStr()) upcomingExams.push({ ...e, studentName: s.name });
+    (s.sessions || []).forEach(sess => {
+      if (sess.paid !== false) totalIncome += (sess.duration || 0) * (s.hourlyRate || 0);
     });
   });
 
+  // 最近课程（全部）
+  let recentSessions = [];
+  students.forEach(s => {
+    (s.sessions || []).forEach(sess => {
+      recentSessions.push({ ...sess, studentName: s.name, studentId: s.id });
+    });
+  });
   recentSessions.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+  // 近期考试
+  let upcomingExams = [];
+  students.forEach(s => {
+    (s.exams || []).forEach(e => {
+      if (e.date >= todayStr()) upcomingExams.push({ ...e, studentName: s.name });
+    });
+  });
   upcomingExams.sort((a,b) => (a.date||'').localeCompare(b.date||''));
 
   let html = `
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">${totalStudents}</div><div class="stat-label">学生总数</div></div>
-      <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value">${monthSessions}</div><div class="stat-label">本月上课次数</div></div>
-      <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value">${monthHours}h</div><div class="stat-label">本月课时</div></div>
-      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" style="color:var(--success)">¥${monthIncome}</div><div class="stat-label">本月收入</div></div>
+    <!-- 月份选择器 -->
+    <div class="month-selector">
+      <div class="month-nav">
+        <button class="btn btn-outline btn-sm" onclick="changeMonth(-1)">◀</button>
+        <div class="month-label">
+          <span class="year">${selectedMonth.split('-')[0]}年</span>
+          <span>${parseInt(selectedMonth.split('-')[1])}月</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="changeMonth(1)">▶</button>
+      </div>
+      ${!isCurrentMonth ? `<button class="btn btn-primary btn-sm" onclick="goToCurrentMonth()">回到本月</button>` : ''}
     </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">${totalStudents}</div>
+        <div class="stat-label">学生总数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value">${selectedStats.sessions}</div>
+        <div class="stat-label">${isCurrentMonth ? '本月' : formatMonth(selectedMonth)}上课次数</div>
+        ${renderChangePct(selectedStats.sessions, lastStats.sessions)}
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-value">${selectedStats.hours}h</div>
+        <div class="stat-label">${isCurrentMonth ? '本月' : formatMonth(selectedMonth)}课时</div>
+        ${renderChangePct(selectedStats.hours, lastStats.hours)}
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-value" style="color:var(--success)">¥${selectedStats.income}</div>
+        <div class="stat-label">${isCurrentMonth ? '本月' : formatMonth(selectedMonth)}收入</div>
+        ${renderChangePct(selectedStats.income, lastStats.income)}
+      </div>
+    </div>
+
+    <!-- 上月数据对比卡片 -->
+    ${isCurrentMonth ? `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>📊 本月 vs 上月 对比</h3></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center">
+          <div>
+            <div style="font-size:0.85em;color:var(--text-light);margin-bottom:8px">上课次数</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+              <div>
+                <div style="font-size:0.75em;color:var(--text-light)">上月</div>
+                <div style="font-size:1.2em;font-weight:600">${lastStats.sessions}</div>
+              </div>
+              <div style="font-size:1.2em">→</div>
+              <div>
+                <div style="font-size:0.75em;color:var(--primary)">本月</div>
+                <div style="font-size:1.2em;font-weight:600;color:var(--primary)">${selectedStats.sessions}</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.85em;color:var(--text-light);margin-bottom:8px">课时</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+              <div>
+                <div style="font-size:0.75em;color:var(--text-light)">上月</div>
+                <div style="font-size:1.2em;font-weight:600">${lastStats.hours}h</div>
+              </div>
+              <div style="font-size:1.2em">→</div>
+              <div>
+                <div style="font-size:0.75em;color:var(--primary)">本月</div>
+                <div style="font-size:1.2em;font-weight:600;color:var(--primary)">${selectedStats.hours}h</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.85em;color:var(--text-light);margin-bottom:8px">收入</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+              <div>
+                <div style="font-size:0.75em;color:var(--text-light)">上月</div>
+                <div style="font-size:1.2em;font-weight:600">¥${lastStats.income}</div>
+              </div>
+              <div style="font-size:1.2em">→</div>
+              <div>
+                <div style="font-size:0.75em;color:var(--primary)">本月</div>
+                <div style="font-size:1.2em;font-weight:600;color:var(--primary)">¥${selectedStats.income}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ` : ''}
 
     <!-- Financial Overview -->
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>💰 收入统计</h3></div>
+      <div class="card-header"><h3>💰 ${formatMonth(selectedMonth)} 收入统计</h3></div>
       <div class="card-body">
         <div class="fin-stat-grid">
           ${students.map(s => {
-            const sMonthHours = (s.sessions||[]).filter(sess => sess.date && sess.date.startsWith(thisMonth)).reduce((a, sess) => a + (sess.duration||0), 0);
-            const sMonthIncome = (s.sessions||[]).filter(sess => sess.date && sess.date.startsWith(thisMonth) && sess.paid !== false).reduce((a, sess) => a + (sess.duration||0) * (s.hourlyRate||0), 0);
+            const sMonthHours = (s.sessions||[]).filter(sess => sess.date && sess.date.startsWith(selectedMonth)).reduce((a, sess) => a + (sess.duration||0), 0);
+            const sMonthIncome = (s.sessions||[]).filter(sess => sess.date && sess.date.startsWith(selectedMonth) && sess.paid !== false).reduce((a, sess) => a + (sess.duration||0) * (s.hourlyRate||0), 0);
             const unpaid = (s.sessions||[]).filter(sess => sess.paid === false).reduce((a, sess) => a + (sess.duration||0) * (s.hourlyRate||0), 0);
             return `<div class="fin-stat-card">
               <div style="font-weight:600;font-size:0.9em;margin-bottom:6px">${escapeHtml(s.name)}</div>
               <div class="fin-val">¥${sMonthIncome}</div>
-              <div class="fin-label">本月 ${sMonthHours}h · 课时费 ¥${s.hourlyRate||0}/h${unpaid > 0 ? ` · <span style="color:var(--danger)">未结 ¥${unpaid}</span>` : ''}</div>
+              <div class="fin-label">${formatMonth(selectedMonth)} ${sMonthHours}h · 课时费 ¥${s.hourlyRate||0}/h${unpaid > 0 ? ` · <span style="color:var(--danger)">未结 ¥${unpaid}</span>` : ''}</div>
             </div>`;
           }).join('')}
         </div>
@@ -3811,120 +4049,97 @@ function copyReportText() {
   }
 }
 
-// ============ SUGGESTIONS ============
+// ============ STATUS LOG ============
+const STATUS_OPTIONS = [
+  { value: 'positive', label: '积极', icon: '😊', color: '#22c55e' },
+  { value: 'normal', label: '一般', icon: '😐', color: '#94a3b8' },
+  { value: 'negative', label: '消极', icon: '😔', color: '#f59e0b' },
+  { value: 'anxious', label: '焦虑', icon: '😰', color: '#f97316' },
+  { value: 'resistant', label: '抗拒', icon: '😤', color: '#ef4444' }
+];
+
+function getStatusInfo(value) {
+  return STATUS_OPTIONS.find(s => s.value === value) || STATUS_OPTIONS[1];
+}
+
 function renderSuggest(container) {
   const s = getStudent(selectedStudentId);
   if (!s) { renderStudentPicker(container, currentPage); return; }
 
-  const suggestions = [];
+  const statusLog = s.statusLog || [];
+  const recentLogs = statusLog.slice(-10).reverse(); // 最近10条，倒序显示
+  const lastStatus = statusLog.length > 0 ? statusLog[statusLog.length - 1] : null;
 
-  // Find weak modules (only "了解" level = need reinforcement, skip "未接触")
-  const weakMods = Object.entries(s.modules||{}).filter(([k,v]) => v === 1).map(([k]) => k);
-  const untouchedMods = Object.entries(s.modules||{}).filter(([k,v]) => v === 0).map(([k]) => k);
-  if (weakMods.length > 0) {
-    suggestions.push({
-      icon: '⚠️',
-      title: '薄弱模块需要巩固',
-      desc: `以下模块处于「了解」级别，建议优先安排复习巩固：\n${weakMods.map(m => '· ' + m).join('\n')}`,
-      priority: 'high'
-    });
-  }
-  if (untouchedMods.length > 0 && untouchedMods.length < Object.keys(s.modules||{}).length) {
-    suggestions.push({
-      icon: '📋',
-      title: '尚未接触的模块',
-      desc: `以下模块暂未接触，不急于排课，待当前薄弱模块巩固后再逐步引入：\n${untouchedMods.slice(0,6).map(m => '· ' + m).join('\n')}${untouchedMods.length>6 ? '\n· ...' : ''}`,
-      priority: ''
-    });
-  }
-
-  // Recent exam analysis
-  if (s.exams.length >= 2) {
-    const sorted = [...s.exams].sort((a,b) => (a.date||'').localeCompare(b.date||''));
-    const recent = sorted.slice(-3);
-    const avgPct = recent.reduce((a,e) => a + safePct(e.score, e.fullScore), 0) / recent.length;
-    if (avgPct < 60) {
-      suggestions.push({
-        icon: '📉',
-        title: '近期成绩偏低',
-        desc: `最近${recent.length}次考试平均得分率 ${avgPct.toFixed(1)}%，建议加强基础训练，适当降低难度，建立信心。`,
-        priority: 'high'
-      });
-    } else if (avgPct < 80) {
-      suggestions.push({
-        icon: '📊',
-        title: '成绩有提升空间',
-        desc: `平均得分率 ${avgPct.toFixed(1)}%，处于中等水平。建议针对错题进行专项训练，突破瓶颈。`,
-        priority: 'medium'
-      });
-    }
-  }
-
-  // Session frequency
-  const recent30 = s.sessions.filter(sess => {
-    const d = new Date(); d.setDate(d.getDate()-30);
-    return sess.date >= dateToStr(d);
+  // 状态统计
+  const statusCounts = {};
+  STATUS_OPTIONS.forEach(opt => statusCounts[opt.value] = 0);
+  statusLog.forEach(log => {
+    if (statusCounts[log.status] !== undefined) statusCounts[log.status]++;
   });
-  if (recent30.length < 4 && s.sessions.length > 0) {
-    suggestions.push({
-      icon: '📅',
-      title: '上课频率偏低',
-      desc: '最近30天上课次数不足4次，建议保持稳定的上课节奏，避免知识遗忘。',
-      priority: 'medium'
-    });
-  }
-
-  // Unresolved issues
-  const openIssues = (s.issues||[]).filter(i => i.status === 'open');
-  if (openIssues.length > 0) {
-    suggestions.push({
-      icon: '🔍',
-      title: '有待解决的学习问题',
-      desc: `有 ${openIssues.length} 个学习问题待解决：\n${openIssues.slice(0,3).map(i => '· '+i.description).join('\n')}`,
-      priority: 'medium'
-    });
-  }
-
-  // Grade-specific suggestions
-  if (s.grade === '高三') {
-    suggestions.push({
-      icon: '🎓',
-      title: '高考备考建议',
-      desc: '高三学生建议：1）每周至少一次模拟练习；2）重点突破薄弱模块；3）建立错题本；4）合理分配各模块复习时间。',
-      priority: 'high'
-    });
-  }
-
-  // Default suggestion if nothing else
-  if (suggestions.length === 0) {
-    suggestions.push({
-      icon: '✅',
-      title: '状态良好',
-      desc: '当前学生学习状态良好，继续保持！建议定期检查各模块掌握度，确保没有遗漏。',
-      priority: ''
-    });
-  }
 
   let html = `
+    <!-- 快速记录状态 -->
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>🎯 智能排课建议 - ${escapeHtml(s.name)}</h3></div>
+      <div class="card-header">
+        <h3>📋 ${escapeHtml(s.name)} 的状态档案</h3>
+        <button class="btn btn-sm btn-primary" onclick="openStatusModal()">+ 记录今日状态</button>
+      </div>
       <div class="card-body">
-        ${suggestions.map(sg => `<div class="suggestion-card">
-          <div class="suggestion-icon">${sg.icon}</div>
-          <div>
-            <div class="suggestion-title">${sg.title}${sg.priority ? `<span class="suggestion-priority priority-${sg.priority}">${sg.priority==='high'?'重要':'建议'}</span>` : ''}</div>
-            <div class="suggestion-desc">${escapeHtml(sg.desc)}</div>
+        ${lastStatus ? `
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:var(--bg-input);border-radius:10px">
+            <div style="font-size:2em">${getStatusInfo(lastStatus.status).icon}</div>
+            <div>
+              <div style="font-weight:600">最近状态：${getStatusInfo(lastStatus.status).label}</div>
+              <div style="font-size:0.85em;color:var(--text-light)">${lastStatus.date}</div>
+            </div>
           </div>
-        </div>`).join('')}
+        ` : '<div style="color:var(--text-light);text-align:center;padding:20px">暂无状态记录，点击右上角开始记录</div>'}
+
+        <!-- 状态分布 -->
+        ${statusLog.length > 0 ? `
+        <div style="display:flex;gap:12px;margin-bottom:16px">
+          ${STATUS_OPTIONS.map(opt => `
+            <div style="flex:1;text-align:center;padding:8px;background:var(--bg-input);border-radius:8px">
+              <div style="font-size:1.2em">${opt.icon}</div>
+              <div style="font-size:0.8em;color:var(--text-light)">${opt.label}</div>
+              <div style="font-weight:600;color:${opt.color}">${statusCounts[opt.value]}</div>
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
       </div>
     </div>
+
+    <!-- 状态历史 -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>📈 状态变化记录</h3></div>
+      <div class="card-body">
+        ${recentLogs.length === 0 ? '<div style="color:var(--text-light);text-align:center;padding:20px">暂无记录</div>' :
+          recentLogs.map(log => {
+            const info = getStatusInfo(log.status);
+            return `<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+              <div style="font-size:1.5em;flex-shrink:0">${info.icon}</div>
+              <div style="flex:1">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                  <span style="font-weight:600;color:${info.color}">${info.label}</span>
+                  <span style="font-size:0.85em;color:var(--text-light)">${log.date}</span>
+                </div>
+                ${log.highlight ? `<div style="font-size:0.9em;margin-bottom:4px">✨ ${escapeHtml(log.highlight)}</div>` : ''}
+                ${log.blocker ? `<div style="font-size:0.9em;color:var(--text-light)">⚠️ ${escapeHtml(log.blocker)}</div>` : ''}
+              </div>
+            </div>`;
+          }).join('')}
+      </div>
+    </div>
+
+    <!-- 学习问题追踪 -->
     <div class="card">
       <div class="card-header">
-        <h3>🔍 学习问题追踪</h3>
-        <button class="btn btn-sm btn-primary" onclick="openModal('issueModal')">+ 记录问题</button>
+        <h3>🔍 待关注事项</h3>
+        <button class="btn btn-sm btn-outline" onclick="openModal('issueModal')">+ 记录问题</button>
       </div>
       <div class="card-body">
-        ${(s.issues||[]).length === 0 ? '<div class="empty-state" style="padding:20px">暂无学习问题记录</div>' :
+        ${(s.issues||[]).length === 0 ? '<div style="color:var(--text-light);text-align:center;padding:20px">暂无待关注事项</div>' :
           (s.issues||[]).map(iss => `<div class="issue-item">
             <div class="issue-status ${iss.status==='resolved'?'resolved':''}" onclick="toggleIssue('${iss.id}')">${iss.status==='resolved'?'✓':''}</div>
             <div class="issue-text ${iss.status==='resolved'?'resolved':''}">${escapeHtml(iss.description)}</div>
@@ -3959,6 +4174,55 @@ function toggleIssue(iid) {
     saveData(appData);
     renderPage();
   }
+}
+
+function openStatusModal() {
+  // 动态生成状态选项
+  const container = document.getElementById('statusOptions');
+  container.innerHTML = STATUS_OPTIONS.map(opt => `
+    <label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;background:var(--bg-input);border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.2s">
+      <input type="radio" name="statusRadio" value="${opt.value}" style="display:none" onchange="selectStatusLabel(this)">
+      <span style="font-size:1.5em">${opt.icon}</span>
+      <span style="font-size:0.85em;font-weight:500">${opt.label}</span>
+    </label>
+  `).join('');
+
+  document.getElementById('statusHighlight').value = '';
+  document.getElementById('statusBlocker').value = '';
+  openModal('statusModal');
+}
+
+function selectStatusLabel(radio) {
+  const opt = STATUS_OPTIONS.find(o => o.value === radio.value);
+  document.querySelectorAll('#statusOptions label').forEach(l => {
+    l.style.borderColor = 'var(--border)';
+    l.style.background = 'var(--bg-input)';
+  });
+  radio.parentElement.style.borderColor = opt.color;
+  radio.parentElement.style.background = opt.color + '11';
+}
+
+function saveStatus() {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+
+  const selected = document.querySelector('input[name="statusRadio"]:checked');
+  if (!selected) { alert('请选择今日状态'); return; }
+
+  const statusEntry = {
+    id: genId(),
+    date: todayStr(),
+    status: selected.value,
+    highlight: document.getElementById('statusHighlight').value.trim(),
+    blocker: document.getElementById('statusBlocker').value.trim(),
+    createdAt: Date.now()
+  };
+
+  if (!s.statusLog) s.statusLog = [];
+  s.statusLog.push(statusEntry);
+  saveData(appData);
+  closeModal('statusModal');
+  renderPage();
 }
 
 // ============ SEARCH ============

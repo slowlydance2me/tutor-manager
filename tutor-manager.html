@@ -8,9 +8,13 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 :root {
+  /* 主色调 */
   --primary: #059669;
   --primary-light: #10b981;
+  --primary-dark: #047857;
   --primary-bg: rgba(16,185,129,0.08);
+
+  /* 功能色 */
   --success: #34d399;
   --success-bg: rgba(52,211,153,0.08);
   --warning: #fbbf24;
@@ -18,19 +22,56 @@
   --danger: #f87171;
   --danger-bg: rgba(248,113,113,0.08);
   --info: #22d3ee;
+  --info-bg: rgba(34,211,238,0.08);
+
+  /* 渐变色 */
+  --gradient-primary: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  --gradient-success: linear-gradient(135deg, #34d399 0%, #6ee7b7 100%);
+  --gradient-warning: linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%);
+  --gradient-danger: linear-gradient(135deg, #f87171 0%, #fca5a5 100%);
+  --gradient-info: linear-gradient(135deg, #22d3ee 0%, #67e8f9 100%);
+  --gradient-sidebar: linear-gradient(180deg, #1a3a2a 0%, #0f2b1f 100%);
+
+  /* 背景色 */
   --bg: #f0f7f4;
   --bg-sidebar: #1a3a2a;
   --bg-sidebar-solid: #1a3a2a;
   --bg-card: #ffffff;
   --bg-input: #f0fdf9;
+  --bg-hover: rgba(16,185,129,0.04);
+
+  /* 玻璃效果 */
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-bg-card: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --glass-blur: blur(12px);
+
+  /* 文字色 */
   --text: #1e3a34;
   --text-light: #6b8f80;
   --text-sidebar: rgba(255,255,255,0.65);
   --text-sidebar-active: #ffffff;
+
+  /* 边框和阴影 */
   --border: #d1e8e0;
+  --border-light: rgba(255, 255, 255, 0.8);
   --shadow: 0 2px 8px rgba(5,150,105,0.06);
+  --shadow-md: 0 4px 16px rgba(5,150,105,0.08);
   --shadow-lg: 0 8px 24px rgba(5,150,105,0.1);
+  --shadow-xl: 0 12px 40px rgba(5,150,105,0.15);
+
+  /* 圆角 */
   --radius: 14px;
+  --radius-sm: 8px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  /* 动画 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  --transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -42,23 +83,48 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+::selection {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--primary-dark);
+}
+:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+}
 a { text-decoration: none; color: inherit; }
 
 /* Layout */
 .app { display: flex; height: 100vh; }
 .sidebar {
   width: 220px;
-  background: var(--bg-sidebar);
+  background: var(--gradient-sidebar);
   color: var(--text-sidebar);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  box-shadow: 4px 0 16px rgba(0,0,0,0.08);
+  box-shadow: 4px 0 20px rgba(0,0,0,0.12);
+  position: relative;
+  z-index: 10;
 }
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+}
+
 .sidebar-header {
   padding: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+  z-index: 1;
 }
+
 .sidebar-header h1 {
   font-size: 1.1em;
   color: #fff;
@@ -67,32 +133,69 @@ a { text-decoration: none; color: inherit; }
   gap: 8px;
   font-weight: 700;
   letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+
 .sidebar-header .sub { font-size: 0.75em; color: var(--text-sidebar); margin-top: 4px; }
-.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; position: relative; z-index: 1; }
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   font-size: 0.9em;
   border-left: 3px solid transparent;
+  position: relative;
+  margin: 2px 8px;
+  border-radius: var(--radius-sm);
 }
-.nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
-.nav-item.active {
-  background: rgba(16,185,129,0.15);
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.08);
   color: #fff;
-  border-left-color: #34d399;
+  transform: translateX(2px);
 }
-.nav-item .nav-icon { font-size: 1.1em; width: 24px; text-align: center; }
+
+.nav-item.active {
+  background: rgba(16,185,129,0.2);
+  color: #fff;
+  border-left-color: var(--primary-light);
+  box-shadow: 0 2px 8px rgba(16,185,129,0.15);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--primary-light);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-item .nav-icon {
+  font-size: 1.1em;
+  width: 24px;
+  text-align: center;
+  transition: transform var(--transition-normal);
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.1);
+}
+
 .nav-section-title {
   padding: 16px 20px 6px;
   font-size: 0.7em;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: rgba(148,163,184,0.6);
+  position: relative;
+  z-index: 1;
 }
 .sidebar-footer {
   padding: 16px 20px;
@@ -107,36 +210,69 @@ a { text-decoration: none; color: inherit; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg);
 }
+
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  position: relative;
+  z-index: 5;
 }
+
+.topbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+}
+
 .topbar-left { display: flex; align-items: center; gap: 16px; }
-.topbar-title { font-size: 1.2em; font-weight: 700; }
+.topbar-title {
+  font-size: 1.2em;
+  font-weight: 700;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .topbar-right { display: flex; align-items: center; gap: 10px; }
 .search-box {
   position: relative;
 }
+
 .search-box input {
   padding: 8px 12px 8px 32px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: 10px;
   font-size: 0.85em;
   width: 220px;
   outline: none;
   color: var(--text);
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
 }
-.search-box input:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+
+.search-box input:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+  transform: translateY(-1px);
+  width: 260px;
+}
+
 .search-box::before {
   content: '🔍';
   position: absolute;
@@ -144,6 +280,11 @@ a { text-decoration: none; color: inherit; }
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.8em;
+  transition: transform var(--transition-normal);
+}
+
+.search-box:focus-within::before {
+  transform: translateY(-50%) scale(1.1);
 }
 .page-content {
   flex: 1;
@@ -154,23 +295,58 @@ a { text-decoration: none; color: inherit; }
 
 /* Cards & Components */
 .card {
-  background: var(--bg-card);
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--radius);
-  border: 1px solid rgba(255,255,255,0.8);
+  border: 1px solid var(--border-light);
   box-shadow: var(--shadow);
-  transition: box-shadow 0.3s, transform 0.2s;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
 }
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
 .card:hover {
   box-shadow: var(--shadow-lg);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
+
+.card:hover::before {
+  opacity: 1;
+}
+
 .card-header {
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
 }
+
+.card-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
+  opacity: 0.3;
+}
+
 .card-header h3 { font-size: 1em; font-weight: 600; }
 .card-body { padding: 20px; }
 
@@ -181,27 +357,61 @@ a { text-decoration: none; color: inherit; }
   gap: 16px;
   margin-bottom: 24px;
 }
+
 .stat-card {
-  background: var(--bg-card);
-  border: 1px solid rgba(255,255,255,0.8);
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow);
-  transition: box-shadow 0.3s, transform 0.2s;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
 }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-normal);
+}
+
 .stat-card:hover {
   box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
 }
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
 .stat-card .stat-icon {
   font-size: 1.5em;
   margin-bottom: 8px;
+  transition: transform var(--transition-normal);
 }
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
 .stat-card .stat-value {
   font-size: 1.8em;
   font-weight: 700;
-  color: var(--text);
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
+
 .stat-card .stat-label {
   font-size: 0.85em;
   color: var(--text-light);
@@ -218,31 +428,97 @@ a { text-decoration: none; color: inherit; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   font-weight: 500;
+  position: relative;
+  overflow: hidden;
 }
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
 .btn-primary {
-  background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+  background: var(--gradient-primary);
   color: #fff;
   border: none;
+  box-shadow: 0 2px 8px rgba(5,150,105,0.2);
 }
+
 .btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(5,150,105,0.3);
+  opacity: 0.95;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(5,150,105,0.35);
 }
-.btn-success { background: var(--success); color: #fff; }
-.btn-success:hover { opacity: 0.9; }
-.btn-warning { background: var(--warning); color: #fff; }
-.btn-danger { background: var(--danger); color: #fff; }
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(5,150,105,0.2);
+}
+
+.btn-success {
+  background: var(--gradient-success);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(52,211,153,0.2);
+}
+
+.btn-success:hover {
+  opacity: 0.95;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52,211,153,0.35);
+}
+
+.btn-warning {
+  background: var(--gradient-warning);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(251,191,36,0.2);
+}
+
+.btn-warning:hover {
+  opacity: 0.95;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(251,191,36,0.35);
+}
+
+.btn-danger {
+  background: var(--gradient-danger);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(248,113,113,0.2);
+}
+
+.btn-danger:hover {
+  opacity: 0.95;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(248,113,113,0.35);
+}
+
 .btn-outline {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-light);
   border-radius: 10px;
 }
-.btn-outline:hover { border-color: var(--primary-light); color: var(--primary); background: var(--primary-bg); }
+
+.btn-outline:hover {
+  border-color: var(--primary-light);
+  color: var(--primary);
+  background: var(--primary-bg);
+  transform: translateY(-1px);
+}
+
 .btn-sm { padding: 5px 10px; font-size: 0.8em; }
+
 .btn-icon {
   width: 32px;
   height: 32px;
@@ -251,12 +527,19 @@ a { text-decoration: none; color: inherit; }
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
 }
-.btn-icon:hover { border-color: var(--primary); }
+
+.btn-icon:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5,150,105,0.15);
+}
 
 /* Forms */
 .form-group { margin-bottom: 16px; }
@@ -269,52 +552,80 @@ a { text-decoration: none; color: inherit; }
 }
 .form-input, .form-select, .form-textarea {
   width: 100%;
-  padding: 8px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: 10px 14px;
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
   font-size: 0.9em;
   color: var(--text);
   outline: none;
   font-family: inherit;
+  transition: all var(--transition-normal);
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12), 0 4px 16px rgba(16,185,129,0.08);
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.95);
+}
+.form-input::placeholder, .form-textarea::placeholder {
+  color: var(--text-light);
+  transition: opacity var(--transition-normal);
+}
+.form-input:focus::placeholder, .form-textarea:focus::placeholder {
+  opacity: 0.5;
 }
 .form-textarea { resize: vertical; min-height: 80px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
 /* Tables */
-.table-wrap { overflow-x: auto; }
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--glass-shadow);
+}
 table { width: 100%; border-collapse: collapse; }
 th, td {
-  padding: 10px 14px;
+  padding: 12px 16px;
   text-align: left;
   font-size: 0.85em;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(209, 232, 224, 0.5);
 }
 th {
   font-weight: 600;
   color: var(--text-light);
-  background: var(--bg-input);
+  background: rgba(16,185,129,0.04);
   white-space: nowrap;
+  text-transform: uppercase;
+  font-size: 0.78em;
+  letter-spacing: 0.5px;
 }
-tr:hover { background: rgba(16,185,129,0.04); }
+tr { transition: background var(--transition-fast); }
+tr:hover { background: rgba(16,185,129,0.06); }
+tr:last-child td { border-bottom: none; }
 
 /* Tags */
 .tag {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 12px;
+  padding: 4px 12px;
+  border-radius: 14px;
   font-size: 0.75em;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all var(--transition-fast);
 }
-.tag-grade { background: var(--primary-bg); color: var(--primary); }
-.tag-success { background: var(--success-bg); color: var(--success); }
-.tag-warning { background: var(--warning-bg); color: var(--warning); }
-.tag-danger { background: var(--danger-bg); color: var(--danger); }
+.tag:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.tag-grade { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(16,185,129,0.2); }
+.tag-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(52,211,153,0.2); }
+.tag-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(251,191,36,0.2); }
+.tag-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
 
 /* Mastery Bar */
 .mastery-bar {
@@ -332,18 +643,25 @@ tr:hover { background: rgba(16,185,129,0.04); }
 .mastery-label { font-size: 0.75em; color: var(--text-light); margin-left: 6px; }
 
 /* Student List */
-.student-list { display: flex; flex-direction: column; gap: 8px; }
+.student-list { display: flex; flex-direction: column; gap: 10px; }
 .student-card-item {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 16px;
-  background: var(--bg-card);
-  border: 1px solid rgba(255,255,255,0.8);
+  padding: 14px 18px;
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius);
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: var(--shadow);
+  transition: all var(--transition-normal);
+  box-shadow: var(--glass-shadow);
+}
+.student-card-item:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(16,185,129,0.3);
 }
 .student-card-item:hover {
   border-color: var(--primary-light);
@@ -408,67 +726,82 @@ tr:hover { background: rgba(16,185,129,0.04); }
   display: none;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(5,150,105,0.1);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(15, 43, 31, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 1000;
   align-items: center;
   justify-content: center;
+  animation: fadeIn var(--transition-normal);
 }
 .modal-overlay.show { display: flex; }
 .modal {
-  background: var(--bg-card);
-  border-radius: 20px;
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
   width: 90%;
   max-width: 600px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(5,150,105,0.12);
-  animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 24px 80px rgba(5,150,105,0.15), 0 0 0 1px rgba(255,255,255,0.1) inset;
+  animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes modalIn {
-  from { transform: translateY(24px) scale(0.98); opacity: 0; }
+  from { transform: translateY(32px) scale(0.95); opacity: 0; }
   to { transform: translateY(0) scale(1); opacity: 1; }
 }
 .modal-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border);
+  padding: 20px 28px;
+  border-bottom: 1px solid rgba(209, 232, 224, 0.6);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.modal-header h3 { font-size: 1.1em; font-weight: 600; }
+.modal-header h3 {
+  font-size: 1.15em;
+  font-weight: 700;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .modal-close {
-  background: none;
+  background: rgba(16,185,129,0.08);
   border: none;
-  font-size: 1.3em;
+  font-size: 1.2em;
   cursor: pointer;
   color: var(--text-light);
-  padding: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
 }
-.modal-close:hover { color: var(--text); }
-.modal-body { padding: 24px; }
+.modal-close:hover { color: var(--primary); background: var(--primary-bg); transform: scale(1.1); }
+.modal-body { padding: 24px 28px; }
 .modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
+  padding: 18px 28px;
+  border-top: 1px solid rgba(209, 232, 224, 0.6);
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* Quick Tags */
-.quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.quick-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .quick-tag {
-  padding: 4px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  padding: 5px 14px;
+  background: var(--glass-bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
   font-size: 0.78em;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   color: var(--text-light);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-.quick-tag:hover { border-color: var(--primary-light); color: var(--primary); background: var(--primary-bg); transform: translateY(-1px); }
+.quick-tag:hover { border-color: var(--primary-light); color: var(--primary); background: var(--primary-bg); transform: translateY(-2px); box-shadow: var(--shadow); }
 .student-switcher {
   padding: 6px 12px;
   background: var(--primary-bg);
@@ -580,15 +913,25 @@ tr:hover { background: rgba(16,185,129,0.04); }
 
 /* Suggestion Cards */
 .suggestion-card {
-  padding: 16px;
+  padding: 18px;
   border-radius: var(--radius);
-  border: 1px solid var(--border);
-  margin-bottom: 12px;
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
+  margin-bottom: 14px;
   display: flex;
-  gap: 12px;
+  gap: 14px;
+  transition: all var(--transition-normal);
+  box-shadow: var(--glass-shadow);
+}
+.suggestion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(16,185,129,0.2);
 }
 .suggestion-icon { font-size: 1.5em; flex-shrink: 0; }
-.suggestion-title { font-weight: 600; font-size: 0.9em; margin-bottom: 4px; }
+.suggestion-title { font-weight: 700; font-size: 0.92em; margin-bottom: 6px; }
 .suggestion-desc { font-size: 0.85em; color: var(--text-light); line-height: 1.6; }
 .suggestion-priority {
   display: inline-block;
@@ -598,8 +941,8 @@ tr:hover { background: rgba(16,185,129,0.04); }
   font-weight: 600;
   margin-left: 8px;
 }
-.priority-high { background: var(--danger-bg); color: var(--danger); }
-.priority-medium { background: var(--warning-bg); color: var(--warning); }
+.priority-high { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+.priority-medium { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(251,191,36,0.2); }
 
 /* Tooltip */
 .tooltip-wrap { position: relative; }
@@ -621,10 +964,36 @@ tr:hover { background: rgba(16,185,129,0.04); }
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.5); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(16,185,129,0.03); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(16,185,129,0.2), rgba(16,185,129,0.35)); border-radius: 4px; transition: background 0.2s; }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(16,185,129,0.35), rgba(16,185,129,0.5)); }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.fade-in { animation: fadeIn 0.5s ease forwards; }
+.slide-in-left { animation: slideInLeft 0.5s ease forwards; }
+.slide-in-right { animation: slideInRight 0.5s ease forwards; }
+.scale-in { animation: scaleIn 0.3s ease forwards; }
 
 /* Workbench */
 .workbench-grid {
@@ -761,20 +1130,30 @@ tr:hover { background: rgba(16,185,129,0.04); }
 .wb-action-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius);
   cursor: pointer;
-  font-size: 0.85em;
-  transition: all 0.2s;
+  font-size: 0.88em;
+  font-weight: 500;
+  transition: all var(--transition-normal);
   color: var(--text);
+  box-shadow: var(--glass-shadow);
 }
 .wb-action-btn:hover {
-  border-color: var(--primary);
+  border-color: rgba(16,185,129,0.4);
   background: var(--primary-bg);
   color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.wb-action-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow);
 }
 .wb-action-btn .wb-ab-icon { font-size: 1.2em; }
 .no-schedule {
@@ -788,47 +1167,57 @@ tr:hover { background: rgba(16,185,129,0.04); }
 .schedule-setup-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(209, 232, 224, 0.5);
+  transition: background var(--transition-fast);
 }
+.schedule-setup-row:hover { background: rgba(16,185,129,0.03); border-radius: var(--radius-sm); }
 .schedule-setup-row:last-child { border-bottom: none; }
 .schedule-day-btn {
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   font-size: 0.8em;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
 }
 .schedule-day-btn.active {
-  background: var(--primary);
+  background: var(--gradient-primary);
   color: #fff;
-  border-color: var(--primary);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(5,150,105,0.25);
+  transform: scale(1.05);
 }
 
 /* Session Type Tags */
-.tag-knowledge { background: var(--primary-bg); color: var(--primary); }
-.tag-exercise { background: var(--success-bg); color: var(--success); }
-.tag-psychology { background: #fdf4ff; color: #a855f7; }
-.tag-exam-review { background: var(--warning-bg); color: var(--warning); }
-.tag-review { background: var(--info); color: #fff; }
+.tag-knowledge { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(16,185,129,0.15); }
+.tag-exercise { background: var(--success-bg); color: var(--success); border: 1px solid rgba(52,211,153,0.15); }
+.tag-psychology { background: #fdf4ff; color: #a855f7; border: 1px solid rgba(168,85,247,0.15); }
+.tag-exam-review { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(251,191,36,0.15); }
+.tag-review { background: var(--info-bg); color: #0891b2; border: 1px solid rgba(34,211,238,0.15); }
 
 /* Board Upload */
 .board-upload-area {
-  background: var(--bg-input);
-  border: 2px dashed var(--border);
-  border-radius: 8px;
-  padding: 12px;
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 2px dashed rgba(16,185,129,0.3);
+  border-radius: var(--radius);
+  padding: 16px;
   min-height: 80px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-normal);
   position: relative;
 }
 .board-upload-area:hover, .board-upload-area.drag-over {
   border-color: var(--primary-light);
   background: var(--primary-bg);
+  transform: scale(1.01);
+  box-shadow: var(--shadow);
 }
 .board-upload-hint {
   text-align: center;
@@ -1228,17 +1617,21 @@ tr:hover { background: rgba(16,185,129,0.04); }
 .cal-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 12px;
-  padding: 10px 14px;
-  background: var(--bg-input);
-  border-radius: 8px;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--glass-bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-shadow);
 }
 .cal-legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.8em;
+  gap: 8px;
+  font-size: 0.82em;
 }
 .cal-legend-dot {
   width: 12px;
@@ -1254,6 +1647,16 @@ tr:hover { background: rgba(16,185,129,0.04); }
   .nav-item { padding: 12px; justify-content: center; }
   .sidebar-footer { display: none; }
   .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .modal { width: 95%; border-radius: var(--radius-lg); }
+  .modal-header, .modal-body, .modal-footer { padding-left: 20px; padding-right: 20px; }
+  .stat-card { min-width: unset; }
+  .card { padding: 16px; }
+}
+
+@media (max-width: 480px) {
+  .topbar { padding: 12px 16px; }
+  .search-box input { width: 120px; }
+  .page-content { padding: 12px; }
 }
 </style>
 </head>
@@ -1381,8 +1784,12 @@ tr:hover { background: rgba(16,185,129,0.04); }
           <option value="exam">📝 考试讲评</option>
           <option value="psychology">💬 心理疏导</option>
         </select>
+        <div id="autoClassifyHint" style="display:none;margin-top:4px;font-size:0.8em;color:var(--primary)"></div>
       </div>
-      <div class="form-group"><label>教学内容 *</label><textarea class="form-textarea" id="sessContent" placeholder="本节课教学内容..."></textarea></div>
+      <div class="form-group"><label>教学内容 *</label>
+        <textarea class="form-textarea" id="sessContent" placeholder="本节课教学内容..." oninput="autoClassifyAndUpdate()"></textarea>
+        <button type="button" class="btn btn-outline btn-sm" style="margin-top:4px" onclick="autoClassifyAndUpdate()">🤖 自动分类</button>
+      </div>
       <div class="form-group"><label>布置作业</label><textarea class="form-textarea" id="sessHomework" placeholder="布置的作业内容..." rows="2"></textarea></div>
       <div class="form-group"><label>课堂备注</label><textarea class="form-textarea" id="sessNotes" placeholder="学生表现、需要跟进的点..." rows="2"></textarea></div>
       <div class="form-group">
@@ -1489,6 +1896,27 @@ tr:hover { background: rgba(16,185,129,0.04); }
         </div>
       </div>
       <div class="report-preview" id="feedbackContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Exam Feedback Modal -->
+<div class="modal-overlay" id="examFeedbackModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <h3>📊 考试反馈</h3>
+      <button class="modal-close" onclick="closeModal('examFeedbackModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row" style="margin-bottom:16px">
+        <div class="form-group"><label>选择考试</label>
+          <select class="form-select" id="examFeedbackSelect" onchange="generateExamFeedback()"></select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="copyExamFeedback()">📋 复制反馈</button>
+        </div>
+      </div>
+      <div class="report-preview" id="examFeedbackContent"></div>
     </div>
   </div>
 </div>
@@ -2087,6 +2515,80 @@ const SESSION_TYPES = {
   exam: { label: '考试讲评', icon: '📝', tag: 'tag-exam-review' },
   review: { label: '复习巩固', icon: '🔄', tag: 'tag-review' }
 };
+
+// 自动分类关键词规则（按优先级排序）
+const SESSION_TYPE_KEYWORDS = {
+  psychology: { keywords: ['心理', '情绪', '压力', '焦虑', '沟通', '鼓励', '心态', '状态', '聊', '谈心', '疏导'], weight: 2 },
+  exam: { keywords: ['考试', '测验', '月考', '期中', '期末', '模拟', '讲评', '试卷', '真题', '得分率', '成绩'], weight: 2 },
+  exercise: { keywords: ['习题', '练习', '做题', '刷题', '训练', '巩固', '计算', '解题', '错题', '题型', '方法'], weight: 1.5 },
+  review: { keywords: ['复习', '回顾', '总结', '梳理', '整理', '知识点'], weight: 1.5 },
+  knowledge: { keywords: ['讲解', '学习', '新课', '新知识', '原理', '推导', '定义', '性质', '应用', '函数', '三角', '向量', '几何', '数列', '导数', '公式', '定理', '概念', '体系'], weight: 1 }
+};
+
+// 自动分类函数
+function autoClassifySession(content) {
+  if (!content || content.trim().length === 0) {
+    return 'knowledge'; // 默认返回知识讲解
+  }
+
+  const contentLower = content.toLowerCase();
+  const scores = {};
+
+  // 初始化分数
+  Object.keys(SESSION_TYPE_KEYWORDS).forEach(type => {
+    scores[type] = 0;
+  });
+
+  // 计算每种类型的匹配分数（考虑权重）
+  Object.entries(SESSION_TYPE_KEYWORDS).forEach(([type, config]) => {
+    config.keywords.forEach(keyword => {
+      if (contentLower.includes(keyword)) {
+        scores[type] += config.weight;
+      }
+    });
+  });
+
+  // 特殊规则：如果同时包含"讲解"和数学内容，优先归类为 knowledge
+  const hasTeachingKeyword = contentLower.includes('讲解') || contentLower.includes('学习') || contentLower.includes('新课');
+  const hasMathContent = contentLower.includes('函数') || contentLower.includes('三角') || contentLower.includes('向量') ||
+                         contentLower.includes('几何') || contentLower.includes('数列') || contentLower.includes('导数') ||
+                         contentLower.includes('公式') || contentLower.includes('定理');
+
+  if (hasTeachingKeyword && hasMathContent) {
+    scores.knowledge += 3; // 额外加分
+  }
+
+  // 找到得分最高的类型
+  let maxScore = 0;
+  let bestType = 'knowledge';
+
+  Object.entries(scores).forEach(([type, score]) => {
+    if (score > maxScore) {
+      maxScore = score;
+      bestType = type;
+    }
+  });
+
+  return bestType;
+}
+
+// 自动分类并更新下拉框
+function autoClassifyAndUpdate() {
+  const content = document.getElementById('sessContent').value;
+  const type = autoClassifySession(content);
+  document.getElementById('sessType').value = type;
+
+  // 显示分类提示
+  const typeInfo = SESSION_TYPES[type];
+  const hint = document.getElementById('autoClassifyHint');
+  if (hint) {
+    hint.textContent = `已自动分类为：${typeInfo.icon} ${typeInfo.label}`;
+    hint.style.display = 'block';
+    setTimeout(() => {
+      hint.style.display = 'none';
+    }, 2000);
+  }
+}
 
 function getTodaySchedule() {
   const today = new Date();
@@ -3065,6 +3567,65 @@ function renderDashboard(container) {
 }
 
 // ============ SESSIONS ============
+// 批量自动分类所有课程
+function batchAutoClassifySessions() {
+  const s = getStudent(selectedStudentId);
+  if (!s || !s.sessions || s.sessions.length === 0) {
+    alert('暂无课程记录，无法进行自动分类');
+    return;
+  }
+
+  if (!confirm(`确定要对 ${s.name} 的 ${s.sessions.length} 条课程记录进行自动分类吗？\n\n这将覆盖现有的课程类型设置。`)) {
+    return;
+  }
+
+  let changedCount = 0;
+  const typeLabels = {
+    knowledge: '📖 知识讲解',
+    exercise: '✏️ 习题训练',
+    psychology: '💬 心理疏导',
+    exam: '📝 考试讲评',
+    review: '🔄 复习巩固'
+  };
+
+  s.sessions.forEach(sess => {
+    if (sess.content) {
+      const oldType = sess.type;
+      const newType = autoClassifySession(sess.content);
+      if (oldType !== newType) {
+        sess.type = newType;
+        changedCount++;
+      }
+    }
+  });
+
+  saveData(appData);
+  renderPage();
+
+  alert(`自动分类完成！\n\n共处理 ${s.sessions.length} 条课程记录\n其中 ${changedCount} 条记录的类型已更新`);
+}
+
+// 一键清空所有课程的反馈状态（用于重新生成反馈）
+function resetAllFeedbackStatus() {
+  const s = getStudent(selectedStudentId);
+  if (!s || !s.sessions || s.sessions.length === 0) {
+    alert('暂无课程记录');
+    return;
+  }
+
+  if (!confirm(`确定要重置 ${s.name} 的所有课程反馈状态吗？\n\n这将允许重新生成所有课程的课后反馈。`)) {
+    return;
+  }
+
+  s.sessions.forEach(sess => {
+    sess.feedbackSent = false;
+  });
+
+  saveData(appData);
+  renderPage();
+  alert('已重置所有课程的反馈状态');
+}
+
 function openAddSession() {
   document.getElementById('sessionModalTitle').textContent = '添加课程';
   document.getElementById('editSessionId').value = '';
@@ -3186,6 +3747,8 @@ function renderSessions(container) {
         <div style="display:flex;gap:8px">
           <button class="btn btn-outline btn-sm" onclick="toggleBoardGallery()">🖼️ 板书集</button>
           <button class="btn btn-success btn-sm" onclick="openFeedback()">📤 课后反馈</button>
+          <button class="btn btn-warning btn-sm" onclick="openExamFeedback()">📊 考试反馈</button>
+          <button class="btn btn-info btn-sm" onclick="batchAutoClassifySessions()">🤖 批量分类</button>
           <button class="btn btn-primary btn-sm" onclick="openAddSession()">+ 添加课程</button>
         </div>
       </div>
@@ -3621,26 +4184,7 @@ function generateFeedback() {
       fb += `家长在家也可以多关注一下。\n\n`;
     }
 
-    if (s.exams && s.exams.length > 0) {
-      const latest = s.exams[0];
-      const pct = safePct(latest.score, latest.fullScore).toFixed(1);
-      fb += `顺便提一下，最近一次考试（${latest.name}）得分率${pct}%`;
-      if (s.exams.length >= 2) {
-        const prev = s.exams[1];
-        const prevPct = safePct(prev.score, prev.fullScore).toFixed(1);
-        const diff = (parseFloat(pct) - parseFloat(prevPct)).toFixed(1);
-        if (diff > 0) fb += `，比上次进步了${diff}个百分点`;
-        else if (diff < 0) fb += `，比上次下降了${Math.abs(diff)}个百分点`;
-      }
-      fb += '，继续加油。\n\n';
-    }
-
-    if (strongMods.length > 0) {
-      fb += `${s.name}在${strongMods[0]}这块基础不错，保持住就好。`;
-    } else {
-      fb += `${s.name}学习态度挺好的，继续保持。`;
-    }
-    fb += `${encourage}\n\n有任何问题随时跟我沟通~`;
+    fb += `有任何问题随时跟我沟通~`;
   }
 
   document.getElementById('feedbackContent').textContent = fb;
@@ -3672,6 +4216,78 @@ function openFeedbackForSession(sid) {
   openFeedback();
   document.getElementById('feedbackSessionSelect').value = idx;
   generateFeedback();
+}
+
+// ============ EXAM FEEDBACK ============
+function openExamFeedback() {
+  const s = getStudent(selectedStudentId);
+  if (!s || !s.exams || s.exams.length === 0) {
+    alert('暂无考试记录，无法生成考试反馈'); return;
+  }
+  const sel = document.getElementById('examFeedbackSelect');
+  sel.innerHTML = s.exams.map((exam, i) => {
+    const pct = safePct(exam.score, exam.fullScore).toFixed(1);
+    return `<option value="${i}">${exam.name} (${exam.date || '未知日期'}) - ${pct}%</option>`;
+  }).join('');
+  openModal('examFeedbackModal');
+  generateExamFeedback();
+}
+
+function generateExamFeedback() {
+  const s = getStudent(selectedStudentId);
+  if (!s) return;
+  const idx = parseInt(document.getElementById('examFeedbackSelect').value);
+  const exam = s.exams[idx];
+  if (!exam) return;
+
+  const pct = safePct(exam.score, exam.fullScore).toFixed(1);
+  const weakMods = Object.entries(s.modules||{}).filter(([k,v]) => v >= 1 && v <= 2).map(([k]) => k);
+  const strongMods = Object.entries(s.modules||{}).filter(([k,v]) => v >= 3).map(([k]) => k);
+  const encourage = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+
+  let fb = '';
+
+  // 考试基本信息
+  fb += `${exam.date || todayStr()} 考试反馈\n\n`;
+  fb += `家长您好，跟您说一下${s.name}${exam.name}的情况。\n\n`;
+
+  // 成绩分析
+  fb += `这次考试得分${exam.score}分（满分${exam.fullScore}分），得分率${pct}%`;
+  if (s.exams.length >= 2) {
+    const prev = s.exams[1];
+    const prevPct = safePct(prev.score, prev.fullScore).toFixed(1);
+    const diff = (parseFloat(pct) - parseFloat(prevPct)).toFixed(1);
+    if (diff > 0) {
+      fb += `，比上次进步了${diff}个百分点`;
+    } else if (diff < 0) {
+      fb += `，比上次下降了${Math.abs(diff)}个百分点`;
+    }
+  }
+  fb += `。\n\n`;
+
+  // 模块分析
+  if (weakMods.length > 0) {
+    fb += `接下来我会重点带${s.name}加强${weakMods.slice(0, 3).join('、')}这些内容，`;
+    fb += `家长在家也可以多关注一下。\n\n`;
+  }
+
+  if (strongMods.length > 0) {
+    fb += `${s.name}在${strongMods[0]}这块基础不错，保持住就好。`;
+  } else {
+    fb += `${s.name}学习态度挺好的，继续保持。`;
+  }
+  fb += `${encourage}\n\n有任何问题随时跟我沟通~`;
+
+  document.getElementById('examFeedbackContent').textContent = fb;
+}
+
+function copyExamFeedback() {
+  const el = document.getElementById('examFeedbackContent');
+  if (el) {
+    navigator.clipboard.writeText(el.textContent).then(() => {
+      alert('考试反馈已复制到剪贴板');
+    });
+  }
 }
 
 // ============ EXAMS / GRADES ============
@@ -3951,93 +4567,130 @@ function buildReport(period) {
   });
 
   // Calculate trend
-  let trend = '持平';
+  let trend = '保持稳定';
   let trendDetail = '';
   if (exams.length >= 2) {
     const sorted = [...exams].sort((a,b) => (a.date||'').localeCompare(b.date||''));
     const first = safePct(sorted[0].score, sorted[0].fullScore);
     const last = safePct(sorted[sorted.length-1].score, sorted[sorted.length-1].fullScore);
     const diff = (last - first).toFixed(1);
-    if (last - first > 5) { trend = '明显进步'; trendDetail = `得分率从 ${first.toFixed(1)}% 提升至 ${last.toFixed(1)}%，提升 ${diff} 个百分点`; }
-    else if (last - first > 0) { trend = '稳步提升'; trendDetail = `得分率从 ${first.toFixed(1)}% 提升至 ${last.toFixed(1)}%`; }
-    else if (last - first < -5) { trend = '有所下滑'; trendDetail = `得分率从 ${first.toFixed(1)}% 下降至 ${last.toFixed(1)}%，需要关注`; }
-    else { trend = '基本持平'; trendDetail = `得分率维持在 ${last.toFixed(1)}% 左右`; }
+    if (last - first > 5) { trend = '进步明显'; trendDetail = `从 ${first.toFixed(1)}分 提升到 ${last.toFixed(1)}分，进步了 ${diff} 分，非常棒！`; }
+    else if (last - first > 0) { trend = '稳步提升'; trendDetail = `从 ${first.toFixed(1)}分 提升到 ${last.toFixed(1)}分，在持续进步。`; }
+    else if (last - first < -5) { trend = '需要关注'; trendDetail = `从 ${first.toFixed(1)}分 下降到 ${last.toFixed(1)}分，需要加强薄弱环节。`; }
+    else { trend = '保持稳定'; trendDetail = `成绩维持在 ${last.toFixed(1)}分 左右，基础扎实。`; }
   }
 
   // Weak modules
   const weakMods = Object.entries(s.modules||{}).filter(([k,v]) => v <= 1 && v > 0).map(([k]) => k);
   const strongMods = Object.entries(s.modules||{}).filter(([k,v]) => v >= 3).map(([k]) => k);
 
-  let report = `📊 学习报告 — ${s.name}\n`;
-  report += `${'━'.repeat(30)}\n\n`;
-  report += `👤 学生信息\n`;
-  report += `姓名：${s.name}  年级：${s.grade}\n`;
-  report += `报告周期：${period === 'month' ? '最近一个月' : period === 'quarter' ? '最近三个月' : period === 'semester' ? '本学期' : '全部'}\n\n`;
+  // 最近的学习状态
+  const recentStatuses = (s.statusLog || []).slice(0, 5);
+  const positiveCount = recentStatuses.filter(s => s.value === 'positive').length;
+  const statusSummary = positiveCount >= 3 ? '最近学习状态很好，积极性很高' :
+                        positiveCount >= 2 ? '学习状态比较稳定' :
+                        '学习状态有起伏，需要多关注';
 
-  report += `📚 课程概况\n`;
-  report += `上课次数：${sessions.length} 次\n`;
-  report += `累计课时：${totalHours} 小时\n`;
+  // 鼓励语
+  const encourage = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+
+  let report = '';
+
+  // 开头问候
+  report += `家长您好！\n\n`;
+  report += `跟您分享一下${s.name}最近的学习情况。\n\n`;
+
+  // 学习概况（简洁版）
+  report += `📚 学习概况\n`;
+  report += `这段时间我们上了 ${sessions.length} 节课，累计 ${totalHours} 小时。`;
   if (Object.keys(typeBreakdown).length > 0) {
-    report += `课程构成：${Object.entries(typeBreakdown).map(([k,v]) => `${k} ${v}次`).join('、')}\n`;
+    const mainType = Object.entries(typeBreakdown).sort((a,b) => b[1] - a[1])[0];
+    report += `主要进行了${mainType[0]}。`;
   }
-  report += '\n';
+  report += `\n\n`;
 
+  // 学习状态（情感化）
+  report += `😊 学习状态\n`;
+  report += `${statusSummary}。`;
+  if (recentStatuses.length > 0) {
+    const lastStatus = recentStatuses[0];
+    const statusInfo = getStatusInfo(lastStatus.value);
+    report += `最近一次上课状态是"${statusInfo.label}"`;
+    if (lastStatus.highlight) {
+      report += `，闪光点是"${lastStatus.highlight}"`;
+    }
+    report += `。\n\n`;
+  } else {
+    report += `\n\n`;
+  }
+
+  // 考试成绩（通俗化）
   if (exams.length > 0) {
-    report += `📈 考试成绩\n`;
-    exams.forEach(e => {
-      const pct = safePct(e.score, e.fullScore).toFixed(1);
-      report += `· ${e.name}（${e.date}）：${e.score}/${e.fullScore}，得分率 ${pct}%`;
-      if (e.rank) report += `，排名 ${e.rank}`;
-      report += '\n';
-    });
-    report += `\n成绩趋势：${trend}`;
-    if (trendDetail) report += `\n${trendDetail}`;
-    report += '\n\n';
+    report += `📊 考试情况\n`;
+    const latest = exams[0];
+    const pct = safePct(latest.score, latest.fullScore).toFixed(1);
+    report += `最近一次考试（${latest.name}）得了 ${latest.score} 分（满分 ${latest.fullScore} 分）`;
+
+    if (exams.length >= 2) {
+      report += `，${trendDetail}`;
+    } else {
+      report += `。`;
+    }
+    report += `\n\n`;
+
+    // 成绩趋势（简单化）
+    if (exams.length >= 2) {
+      report += `📈 成绩趋势：${trend}\n\n`;
+    }
   }
 
+  // 优势与不足（平衡表达）
   if (strongMods.length > 0) {
-    report += `✅ 掌握较好的模块\n`;
-    strongMods.forEach(m => { report += `· ${m}\n`; });
-    report += '\n';
-  }
-  if (weakMods.length > 0) {
-    report += `⚠️ 需要加强的模块\n`;
-    weakMods.forEach(m => { report += `· ${m}\n`; });
-    report += '\n';
+    report += `✅ 做得好的地方\n`;
+    report += `${s.name}在${strongMods[0]}这块掌握得不错，`;
+    report += `基础扎实，继续保持就好。\n\n`;
   }
 
-  // Recent content
+  if (weakMods.length > 0) {
+    report += `📝 需要加强的地方\n`;
+    report += `接下来我会重点带${s.name}加强${weakMods.slice(0, 3).join('、')}这些内容。`;
+    report += `这些是高考的重点，我们一步一步来。\n\n`;
+  }
+
+  // 近期教学内容（简化）
   if (sessions.length > 0) {
-    report += `📝 近期教学内容\n`;
-    sessions.slice(0,5).forEach(sess => {
-      const typeInfo = SESSION_TYPES[sess.type] || SESSION_TYPES.knowledge;
-      report += `· ${sess.date} [${typeInfo.label}]：${(sess.content||'').slice(0,50)}\n`;
+    report += `📖 最近学了什么\n`;
+    sessions.slice(0,3).forEach(sess => {
+      const content = (sess.content || '').split('\n')[0]; // 只取第一行
+      report += `· ${sess.date}：${content.slice(0, 30)}${content.length > 30 ? '...' : ''}\n`;
     });
-    report += '\n';
+    report += `\n`;
   }
 
-  // Next steps
-  report += `🎯 后续教学计划\n`;
+  // 后续计划（具体化）
+  report += `🎯 接下来的计划\n`;
   if (weakMods.length > 0) {
-    report += `1. 重点巩固以下薄弱模块：${weakMods.slice(0,3).join('、')}\n`;
-    report += `2. 针对性练习，强化解题能力\n`;
+    report += `1. 重点突破${weakMods.slice(0,2).join('和')}\n`;
+    report += `2. 加强典型题练习，提高解题速度\n`;
   }
-  if (s.grade === '高三') {
-    report += `${weakMods.length > 0 ? '3' : '1'}. 持续进行高考模拟训练，提升应试能力\n`;
+  if (s.grade === '高三' || s.grade === '高二') {
+    report += `${weakMods.length > 0 ? '3' : '1'}. 进行专题训练，为考试做准备\n`;
   }
-  report += '\n';
+  report += `\n`;
 
-  // Open issues (internal only, not shown to parents)
-  const openIssues = (s.issues||[]).filter(i => i.status === 'open');
-  if (openIssues.length > 0) {
-    report += `🔍 待跟进事项（内部记录）\n`;
-    openIssues.forEach(i => { report += `· ${i.description}\n`; });
-    report += '\n';
+  // 家长配合建议（实用化）
+  report += `💡 家长可以这样做\n`;
+  if (weakMods.length > 0) {
+    report += `· 在家可以多关注${s.name}的${weakMods[0]}练习情况\n`;
   }
+  report += `· 鼓励孩子保持学习积极性，多肯定TA的努力\n`;
+  report += `· 如果发现孩子有情绪波动，及时跟我沟通\n\n`;
 
-  report += `${'━'.repeat(30)}\n`;
-  report += `以上报告由数学家教系统生成\n`;
-  report += `如有疑问请随时沟通，感谢您的信任与配合！`;
+  // 鼓励与感谢
+  report += `🌈 老师寄语\n`;
+  report += `${encourage}\n\n`;
+  report += `${s.name}是个有潜力的孩子，我相信TA会越来越好。\n\n`;
+  report += `有任何问题随时跟我沟通，感谢您的信任与配合！`;
 
   return report;
 }

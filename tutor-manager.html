@@ -2762,6 +2762,8 @@ function showWeekIncomeDetail() {
   // 触发动画显示
   requestAnimationFrame(() => modal.classList.add('show'));
 }
+
+function getPendingFeedbacks() {
   const items = [];
   const todayStr2 = todayStr();
   appData.students.forEach(s => {

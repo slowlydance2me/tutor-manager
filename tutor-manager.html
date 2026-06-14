@@ -1027,6 +1027,12 @@ tr:last-child td { border-bottom: none; }
   border-radius: var(--radius);
   padding: 14px 16px;
   text-align: center;
+  transition: all var(--transition-fast);
+}
+.wb-quick-stat[onclick]:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
 }
 .wb-quick-stat .wb-qs-val {
   font-size: 1.5em;
@@ -2641,7 +2647,121 @@ function getWeekStats() {
   return { weekHours, weekSessions, weekIncome };
 }
 
-function getPendingFeedbacks() {
+// 获取本周收入明细
+function getWeekIncomeDetails() {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  const weekStartStr = dateToStr(weekStart);
+
+  const details = []; // { studentName, date, duration, hourlyRate, amount }
+  appData.students.forEach(s => {
+    (s.sessions || []).forEach(sess => {
+      if (sess.date && sess.date >= weekStartStr && sess.paid !== false) {
+        details.push({
+          studentName: s.name,
+          date: sess.date,
+          duration: sess.duration || 0,
+          hourlyRate: s.hourlyRate || 0,
+          amount: (sess.duration || 0) * (s.hourlyRate || 0)
+        });
+      }
+    });
+  });
+  // 按日期排序
+  details.sort((a, b) => a.date.localeCompare(b.date));
+  return details;
+}
+
+// 按学生汇总本周收入
+function getWeekIncomeByStudent() {
+  const details = getWeekIncomeDetails();
+  const byStudent = {};
+  details.forEach(d => {
+    if (!byStudent[d.studentName]) {
+      byStudent[d.studentName] = { totalHours: 0, totalAmount: 0, sessions: 0 };
+    }
+    byStudent[d.studentName].totalHours += d.duration;
+    byStudent[d.studentName].totalAmount += d.amount;
+    byStudent[d.studentName].sessions++;
+  });
+  return byStudent;
+}
+
+// 显示本周收入明细弹窗
+function showWeekIncomeDetail() {
+  const details = getWeekIncomeDetails();
+  const byStudent = getWeekIncomeByStudent();
+  const totalIncome = details.reduce((sum, d) => sum + d.amount, 0);
+  const totalHours = details.reduce((sum, d) => sum + d.duration, 0);
+
+  // 移除已存在的弹窗
+  const existing = document.getElementById('weekIncomeModal');
+  if (existing) existing.remove();
+
+  let bodyHtml = '';
+  if (details.length === 0) {
+    bodyHtml = '<div style="text-align:center;color:var(--text-light);padding:20px">本周暂无收入记录</div>';
+  } else {
+    // 按学生汇总
+    bodyHtml += '<div style="margin-bottom:20px"><h4 style="font-size:0.9em;color:var(--text-light);margin-bottom:12px">📊 按学生汇总</h4>';
+    bodyHtml += '<div style="display:flex;flex-direction:column;gap:8px">';
+    Object.entries(byStudent).forEach(([name, data]) => {
+      bodyHtml += `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--primary-bg);border-radius:var(--radius-sm);border:1px solid rgba(16,185,129,0.1)">
+          <div>
+            <span style="font-weight:600">${name}</span>
+            <span style="font-size:0.85em;color:var(--text-light);margin-left:10px">${data.sessions}节课 · ${data.totalHours}小时</span>
+          </div>
+          <span style="font-weight:700;color:var(--primary);font-size:1.05em">¥${data.totalAmount}</span>
+        </div>
+      `;
+    });
+    bodyHtml += '</div></div>';
+
+    // 详细记录
+    bodyHtml += '<h4 style="font-size:0.9em;color:var(--text-light);margin-bottom:12px">📋 详细记录</h4>';
+    bodyHtml += '<div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border)"><table style="width:100%;font-size:0.85em;border-collapse:collapse">';
+    bodyHtml += '<thead><tr style="background:rgba(16,185,129,0.05)"><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">学生</th><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">日期</th><th style="text-align:right;padding:10px 12px;border-bottom:1px solid var(--border)">时长</th><th style="text-align:right;padding:10px 12px;border-bottom:1px solid var(--border)">费率</th><th style="text-align:right;padding:10px 12px;border-bottom:1px solid var(--border)">小计</th></tr></thead><tbody>';
+    details.forEach(d => {
+      bodyHtml += `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border)">${d.studentName}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border)">${d.date}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:right">${d.duration}h</td>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:right">¥${d.hourlyRate}/h</td>
+        <td style="padding:10px 12px;border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--primary)">¥${d.amount}</td>
+      </tr>`;
+    });
+    bodyHtml += '</tbody></table></div>';
+
+    // 汇总
+    bodyHtml += `<div style="margin-top:16px;padding-top:14px;border-top:2px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span style="color:var(--text-light);font-size:0.9em">共 ${details.length} 节课，${totalHours} 小时</span>
+      <span style="font-size:1.2em;font-weight:700;color:var(--primary)">合计：¥${totalIncome}</span>
+    </div>`;
+  }
+
+  // 动态创建模态框
+  const modal = document.createElement('div');
+  modal.id = 'weekIncomeModal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:650px">
+      <div class="modal-header">
+        <h3>💰 本周收入明细</h3>
+        <button class="modal-close" onclick="document.getElementById('weekIncomeModal').remove()">&times;</button>
+      </div>
+      <div class="modal-body">${bodyHtml}</div>
+      <div class="modal-footer">
+        <button class="btn" onclick="document.getElementById('weekIncomeModal').remove()">关闭</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  // 触发动画显示
+  requestAnimationFrame(() => modal.classList.add('show'));
+}
   const items = [];
   const todayStr2 = todayStr();
   appData.students.forEach(s => {
@@ -2688,9 +2808,9 @@ function renderWorkbench(container) {
         <div class="wb-qs-val">${weekStats.weekHours}h</div>
         <div class="wb-qs-label">本周课时</div>
       </div>
-      <div class="wb-quick-stat">
+      <div class="wb-quick-stat" onclick="showWeekIncomeDetail()" style="cursor:pointer" title="点击查看收入明细">
         <div class="wb-qs-val" style="color:var(--success)">¥${weekStats.weekIncome}</div>
-        <div class="wb-qs-label">本周收入</div>
+        <div class="wb-qs-label">本周收入 ↗</div>
       </div>
     </div>
 
